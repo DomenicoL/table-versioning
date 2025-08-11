@@ -1,0 +1,41 @@
+name: Automated Changelog Generation
+
+on:
+  push:
+    branches:
+      - main
+      
+jobs:
+  update-changelog:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        # Fetch the full history to compare commits
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Generate Changelog
+        # Esegui lo script Python che ora confronta la commit corrente con quella precedente
+        run: python3 compare_schemas.py
+
+      - name: Commit and push changelog
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add CHANGELOG.md
+          # Usa un 'grep' per verificare se ci sono modifiche prima di committare
+          if ! git diff --cached --exit-code; then
+            git commit -m "chore: Automated changelog update"
+            git push
+          else
+            echo "No changes to commit."
+          fi
