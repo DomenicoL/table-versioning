@@ -48,18 +48,12 @@ This bitemporal framework for PostgreSQL automates the management of historical 
 
 ### In-depth Sections
 
-#### Action Hints
+* [**Action Hints**](action_hints.md): This section provides a detailed explanation of how `action_hints` can be used to customize trigger behavior.
 
-This section will detail how to use action hints to customize the behavior of the `vrsn.trigger_handler()` function, providing flexibility for different business requirements.
+* [**Updating Entity Attributes with `cached_attribute`**](object_field_behavior.md): This section describes how to enable and use the overwriting of entity attributes using the `vrsn.cached_attribute` domain.
 
-#### Updating JSONB Data
+* [**Trigger Activation Rercord**](tar.md): This section describes how the software manage its behavior using a stack variable. 
 
-This section will describe how to use a dedicated function to safely and efficiently update or replace specific parts of a `jsonb` field on the main table, ensuring data integrity and correct historicization.
+* **Per-Attribute Historicization:** This section will explain the mechanism for historicizing only specific attributes of an entity. This approach can reduce data redundancy and optimize storage for entities with frequently changing fields, as only the changed attributes (or a minimal set of context attributes) will trigger a new historical record.
 
-#### Per-Attribute Historicization
-
-This section will explain the mechanism for historicizing only specific attributes of an entity. This approach can reduce data redundancy and optimize storage for entities with frequently changing fields, as only the changed attributes (or a minimal set of context attributes) will trigger a new historical record.
-
-#### Different Identity Management
-
-This section will detail how to handle various types of identities (e.g., natural keys, surrogate keys) within the bitemporal framework. It will cover strategies to ensure that the versioning and history tracking mechanisms work correctly and efficiently, regardless of the primary key strategy used for the underlying entities.
+* **Different Identity Management:** This section will detail how to handle various types of identities (e.g., natural keys, surrogate keys) within the bitemporal framework. It will cover strategies to ensure that the versioning and history tracking mechanisms work correctly and efficiently, regardless of the primary key strategy used for the underlying entities.
