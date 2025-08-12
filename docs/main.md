@@ -1,0 +1,65 @@
+# PostgreSQL Bitemporal Solution Overview
+
+This bitemporal framework for PostgreSQL automates the management of historical data and audit trails while maintaining full visibility and control for the user. It is built around two core schemas: `common` and `vrsn`.
+
+---
+
+### Architecture and Key Components
+
+* **`common` Schema:** Contains essential utility functions and data types that support the solution, such as `common.key_value_list` for handling structured data.
+
+* **`vrsn` Schema:** This is the core of the solution. It defines the logic, functions, and data types for managing bitemporal records.
+
+* **`vrsn.bitemporal_record` Type:** This is the fundamental data type used for the `bt_info` column. It comprises three key components for managing historical and audit data:
+
+    * `user_ts_range`: The time range during which the data is considered valid from a business perspective (valid time).
+
+    * `db_ts_range`: The time range during which the data is actually stored in the database (transaction time).
+
+    * `audit_record jsonb`: A JSONB record storing audit information, such as the user who performed the operation and the timestamp of the event.
+
+* **`vrsn.historic_entity_behaviour` Type:** An ENUM type that defines how an entity should be historicized, with options like `'always'`, `'never'`, or `'on_main_fields'`, allowing for fine-grained control.
+
+---
+
+### Workflow for Entity Management
+
+1.  **Table Creation:** Start with any entity from your data model and create a corresponding table with the `_current` suffix. This table must include the `bt_info` column of type `vrsn.bitemporal_record`, preferably as the first column, and it should be excluded from the primary key.
+
+2.  **`bitemporal_register` Function:** This central function automates the creation of the following objects:
+
+    * **The View:** A view with the original entity name (without the `_current` suffix) is created. This view exposes all columns from the `_current` table, along with additional columns for traceability (`is_closed`, `modify_user_id`, `modify_ts`).
+
+    * **`INSTEAD OF` Trigger:** The view is equipped with a trigger that intercepts all `INSERT`, `UPDATE`, and `DELETE` operations. This trigger delegates the logic to the `vrsn.trigger_handler()` function, which manages the underlying bitemporal logic.
+
+    * **The History Table:** A table with an `_history` suffix is created to store all historical versions of the data.
+
+---
+
+### Data Manipulation (DML)
+
+* **Entry Point:** All data manipulation operations (`INSERT`, `UPDATE`) must be performed exclusively on the **view**, never directly on the tables.
+
+* **Logical Deletion:** Physical deletion of a record is not allowed. Instead, an `UPDATE` operation on the view is used to mark a record as logically deleted by updating the `bt_info`'s `audit_record`, setting an `is_closed` flag to `true`. This action ensures that the record's history is preserved while marking it as no longer active.
+
+* **Temporal Deactivation (`vrsn.audit_record__deactivate`):** This function is crucial for **retroactive corrections** that rewrite a new temporal line. If a new modification is introduced with a `user_ts_range` that overlaps or precedes existing history, `vrsn.audit_record__deactivate` is used to logically "deactivate" or "close" the previously valid records in the history. This ensures that the system's understanding of past reality is consistent with the new, corrected information, without physically deleting any data.
+
+---
+
+### In-depth Sections
+
+#### Action Hints
+
+This section will detail how to use action hints to customize the behavior of the `vrsn.trigger_handler()` function, providing flexibility for different business requirements.
+
+#### Updating JSONB Data
+
+This section will describe how to use a dedicated function to safely and efficiently update or replace specific parts of a `jsonb` field on the main table, ensuring data integrity and correct historicization.
+
+#### Per-Attribute Historicization
+
+This section will explain the mechanism for historicizing only specific attributes of an entity. This approach can reduce data redundancy and optimize storage for entities with frequently changing fields, as only the changed attributes (or a minimal set of context attributes) will trigger a new historical record.
+
+#### Different Identity Management
+
+This section will detail how to handle various types of identities (e.g., natural keys, surrogate keys) within the bitemporal framework. It will cover strategies to ensure that the versioning and history tracking mechanisms work correctly and efficiently, regardless of the primary key strategy used for the underlying entities.
