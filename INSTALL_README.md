@@ -46,7 +46,7 @@ The first step is to run the `prepare.sh` script, which handles the creation of 
 
 Before proceeding, it is **highly recommended** to check the `CHANGELOG.md` file to understand what changes will be applied to your database.
 
-* Pay close attention to any objects that have been **removed** (`❌ Removed`), as these changes may be destructive.
+* Pay close attention to any objects that have been **removed** (`❌ Removed`), since these actions will have to be done manually (after backup).
 
 ---
 
