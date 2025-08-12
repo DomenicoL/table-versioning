@@ -60,6 +60,7 @@ psql -v ON_ERROR_STOP=1 -d your_db_name -f install_common.sql
 psql -v ON_ERROR_STOP=1 -d your_db_name -f install_vrsn.sql
 
 The -v ON_ERROR_STOP=1 option will stop the installation on the first error, preventing partial schema corruption.
+```
 
 ### 4. If installation goes ok
 
