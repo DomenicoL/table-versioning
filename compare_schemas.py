@@ -35,9 +35,6 @@ def parse_schema_dump(sql_dump_content):
             continue # Malformed or last incomplete block
 
         full_header_block = blocks[i]
-        oid = blocks[i+1] # This is actually the 'name' group from the split regex
-        name = blocks[i+2] # This is actually the 'type' group from the split regex
-        obj_type = blocks[i+3] # This is actually the 'schema' group from the split regex
         
         # The split regex captures the groups from the header.
         # Let's re-extract the exact oid, name, obj_type from the full_header_block to be safe
@@ -104,8 +101,9 @@ def run_comparison(old_common_content, new_common_content, old_vrsn_content, new
 
 def main_logic(): # Renamed to avoid confusion with `main` entry point
     parser = argparse.ArgumentParser(description='Confronta le definizioni degli schemi e genera un changelog.')
-    parser.add_argument('mode', choices=['github-actions', 'local'], help='Modalità di esecuzione dello script.')
-    parser.add_argument('--last-install-dir', help='Percorso della directory con gli ultimi script installati (solo in modalità local).')
+    # CHANGED: 'mode' is now a required optional argument
+    parser.add_argument('--mode', choices=['github-actions', 'local'], required=True, help='Execution mode of the script.')
+    parser.add_argument('--last-install-dir', help='Path to the directory with the last installed scripts (only in local mode).')
     args = parser.parse_args()
 
     new_common_content = open(SOURCE_COMMON_SQL, 'r').read()
@@ -138,6 +136,10 @@ def main_logic(): # Renamed to avoid confusion with `main` entry point
                 f.write("\n" + old_changelog_content)
     
     elif args.mode == 'local':
+        if not args.last_install_dir:
+            print("Error: --last-install-dir is required for 'local' mode.")
+            sys.exit(1)
+
         last_common_path = os.path.join(args.last_install_dir, os.path.basename(SOURCE_COMMON_SQL))
         last_vrsn_path = os.path.join(args.last_install_dir, os.path.basename(SOURCE_VRSN_SQL))
         
