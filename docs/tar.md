@@ -1,5 +1,4 @@
-# PostgreSQL Bitemporal Solution: `vrsn.trigger_activation_record_base`
-# PostgreSQL Bitemporal Solution: `vrsn.trigger_activation_record_base`
+# PostgreSQL Bitemporal Solution: `vrsn.trigger_activation_record`
 
 The `vrsn.trigger_activation_record_base` table is a crucial table within the PostgreSQL bitemporal framework. It acts as a **unique session-level context record** that stores the details of the highest-level DML (Data Manipulation Language) operation currently in progress. It serves as a central point for the configuration and state of the trigger handler (`vrsn.trigger_handler()`).
 
