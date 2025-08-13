@@ -7228,11 +7228,6 @@ INSERT INTO vrsn.test_table_check_run_detail VALUES
 -- Data for Name: test_table_current; Type: TABLE DATA; Schema: vrsn; Owner: clc
 --
 
-INSERT INTO vrsn.test_table_current VALUES
-	('("[""2025-08-07 20:24:14.780509+02"",infinity)","[""2025-08-07 20:24:14.780509+02"",infinity)","{""touchTs"": ""2025-08-07T21:24:14.912218+02:00"", ""user_id"": ""sono un utente""}")', 1, 'foo jb tutto jb', '2025-08-06 20:24:14.780509+02', 32, '{"field_02": 4, "sometext": "foo jb tutto jb", "somevalue": 32, "modify_user_id": "sono un utente"}'),
-	('("[""2025-08-10 22:34:18.079023+02"",infinity)","[""2025-08-10 22:34:18.079023+02"",infinity)","{""touchTs"": ""2025-08-11T00:08:10.150359+02:00"", ""user_id"": ""aaa""}")', 2, 'aaa', NULL, 6, NULL);
-
-
 --
 -- TOC entry 4841 (class 0 OID 24549)
 -- Dependencies: 320
