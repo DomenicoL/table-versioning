@@ -10,12 +10,18 @@ Installation and upgrades are managed through scripts, which allow you to custom
 
 ---
 
-### Installation and Upgrades
+## Installation and Upgrades
 
 To install or upgrade the solution in your database, please follow the detailed instructions in the [INSTALL_README.md](INSTALL_README.md) file.
 
 ---
 
-### Changelog
+## Changelog
 
 To see the schema changes across different project versions, refer to the `CHANGELOG.md` file, which is updated automatically.
+
+---
+
+## Documentation
+
+To learn about this solution go to [documentation section](docs/main.md).
