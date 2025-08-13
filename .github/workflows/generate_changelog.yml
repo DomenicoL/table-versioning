@@ -25,7 +25,7 @@ jobs:
 
       - name: Generate Changelog
         # Corrected: Added 'github-actions' mode argument
-        run: python3 compare_schemas.py github-actions
+        run: python3 compare_schemas.py --mode github-actions
 
       - name: Commit and push changelog
         run: |
