@@ -1,5 +1,7 @@
 # PostgreSQL Bitemporal Solution: Updating Entity Attributes with `cached_attribute`
 
+[main](main.md) - [readme](../README.md)
+
 This section describes a specialized mechanism within the bitemporal framework that allows for **overwriting multiple entity attributes by providing a payload of type `vrsn.cached_attribute`**. This approach offers flexibility for applications that manage dynamic sets of attributes or need a generalized update interface, particularly for fields that might store semi-structured data.
 
 The `vrsn.cached_attribute` is a domain defined as `jsonb` (`CREATE DOMAIN vrsn.cached_attribute AS jsonb;`). This means you provide a `jsonb` object, and the system uses its structure to update corresponding entity attributes. This functionality is processed by the `vrsn.trigger_handler()` when an update operation is performed on the entity's view, provided the feature is enabled for that entity.
@@ -76,3 +78,7 @@ SET
     modify_ts = '2025-08-12 10:30:00+00' -- Or `clock_timestamp()` for current time
 WHERE entity_id = 123;
 ```
+
+
+---
+[main](main.md) - [readme](../README.md)

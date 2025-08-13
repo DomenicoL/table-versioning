@@ -1,5 +1,7 @@
 # PostgreSQL Bitemporal Solution: Core Tables
 
+[main](main.md) - [readme](../README.md)
+
 This section details three key tables within the `vrsn` schema that are fundamental to the bitemporal framework's ability to manage entity behavior, track attribute lineage, and map attributes to their respective entities.
 
 ---
@@ -61,3 +63,7 @@ This is a **physical table** that stores the core configuration for each bitempo
     * **`ignore_unchanged_values` (`boolean` NOT NULL, DEFAULT `true`):** If `TRUE`, an `UPDATE` will not create a new history record if no significant values have changed.
     * **`enable_attribute_to_fields_replacement` (`boolean` NOT NULL, DEFAULT `false`):** If `TRUE`, enables the functionality to overwrite scalar entity fields using values from a `vrsn.cached_attribute` column (as described in a previous document).
     * **`field_special_behavior` (`jsonb`):** (Potentially) A JSONB field for more granular, field-specific behavior configurations that can override general settings.
+    
+---
+
+[main](main.md) - [readme](../README.md)

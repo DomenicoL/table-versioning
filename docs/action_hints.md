@@ -1,5 +1,7 @@
 # PostgreSQL Bitemporal Solution: Action Hints
 
+[main](main.md) - [readme](../README.md)
+
 Action hints provide a powerful mechanism to customize the behavior of the `vrsn.trigger_handler()` function on a per-operation basis. These hints are passed as a `jsonb` object within the `NEW` record of the view being manipulated (e.g., `NEW.action_hints`). The `vrsn.trigger_handler()` will then interpret these hints via the `vrsn.__tar_h__config_func_update` function, overriding default behaviors.
 
 Here are the primary parameterizations available within the `action_hints` JSONB object and their effects:
@@ -37,3 +39,7 @@ Here are the primary parameterizations available within the `action_hints` JSONB
 * **`modify_ts` (`timestamptz`):** Similar to `modify_user_id`, this field in the `NEW` record is used to set the `user_ts_range` (valid time) of the record. If provided and it's a past date, it triggers the complex temporal deactivation logic described in the main overview.
 
 * **Other Parameters (`extraInfo`):** Any other key-value pairs present in the `action_hints` JSONB that are not recognized by the specific parameters listed above will be collected and stored in the `audit_record` under the `extraInfo` key. This allows for passing custom, application-specific metadata alongside the bitemporal operation without needing to modify the core trigger logic.ac
+
+
+---
+[main](main.md) - [readme](../README.md)

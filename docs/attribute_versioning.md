@@ -1,5 +1,8 @@
 # PostgreSQL Bitemporal Solution: Attribute versioning
 
+[main](main.md) - [readme](../README.md)
+
+
 ## Attribute Management
 
 When the `enable_history_attributes` flag is set to `TRUE` for an entity, the bitemporal framework activates a powerful mechanism for managing attribute data separately from the main entity table. This feature is particularly useful for entities with complex or dynamic attribute sets often stored in `jsonb` columns.
@@ -48,4 +51,7 @@ Combining the bitemporal attribute management with the `enable_attribute_to_fiel
 
   * **Optimized Historicization:** When attribute-level historicization is active, you can significantly reduce the overhead on the main entity table. In this scenario, it is often not necessary to historicize the main table on every attribute change. You can set the main entity's behavior to `historice_entity = 'on_main_fields'` or even `'never'`, triggering a new version only when critical, non-attribute-related fields change. This prevents redundant historicization and keeps the main table's history cleaner and more performant.
 
-For details on managing global vs. local attribute definitions, see the [Attribute Maintenance Section](https://www.google.com/search?q=%23attribute-maintenance).
+For details on managing global vs. local attribute definitions, see the [Attribute Maintenance Section](attribute_maintenance.md).
+
+---
+[main](main.md) - [readme](../README.md)
