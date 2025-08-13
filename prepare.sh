@@ -58,7 +58,8 @@ if [ ! -d "$LAST_INSTALL_DIR" ]; then
     mkdir -p "$LAST_INSTALL_DIR"
 fi
 
-python3 compare_schemas.py local --last-install-dir "$LAST_INSTALL_DIR"
+# THIS LINE MUST BE EXACTLY AS SHOWN:
+python3 compare_schemas.py --mode local --last-install-dir "$LAST_INSTALL_DIR"
 
 echo "--- Next steps ---"
 echo "1. A specific changelog for this update has been saved to 'CHANGELOG_generated.md'."
