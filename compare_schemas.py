@@ -13,9 +13,14 @@ print(f"Arguments received by script: {sys.argv}")
 ORIGINAL_COMMON_SQL = "common.sql"
 ORIGINAL_VRSN_SQL = "vrsn.sql"
 
-# Nomi dei file generati da prepare.sh (con prefisso)
-INSTALL_COMMON_SQL_PREFIXED = "install_common.sql"
-INSTALL_VRSN_SQL_PREFIXED = "install_vrsn.sql"
+# Nomi dei file generati da prepare.sh (con prefisso LOCAL_INSTALL_)
+LOCAL_INSTALL_COMMON_SQL_PREFIXED = "LOCAL_INSTALL_common.sql"
+LOCAL_INSTALL_VRSN_SQL_PREFIXED = "LOCAL_INSTALL_vrsn.sql"
+
+# Nomi dei file di changelog
+GITHUB_CHANGELOG_FILE = "CHANGELOG.md"
+LOCAL_CHANGELOG_FILE_PREFIXED = "LOCAL_INSTALL_CHANGELOG.md"
+
 
 def parse_schema_dump(sql_dump_content):
     """
@@ -96,12 +101,12 @@ def run_comparison(old_common_content, new_common_content, old_vrsn_content, new
 
     changelog_block = f"""
 ---
-### Version {current_version_timestamp} ({current_commit_hash[:7]})
+# Version {current_version_timestamp} ({current_commit_hash[:7]})
 
-#### common.sql
+## common.sql
 {common_changes}
 
-#### vrsn.sql
+## vrsn.sql
 {vrsn_changes}
 """
     return changelog_block.strip(), common_changes, vrsn_changes
@@ -114,21 +119,22 @@ def main_logic():
 
     # Determine file names based on mode
     if args.mode == 'github-actions':
-        current_common_file = ORIGINAL_COMMON_SQL
-        current_vrsn_file = ORIGINAL_VRSN_SQL
-        # For 'github-actions' mode, previous files are read via 'git show'
+        current_common_file_to_read = ORIGINAL_COMMON_SQL
+        current_vrsn_file_to_read = ORIGINAL_VRSN_SQL
         previous_common_file_name_for_git = ORIGINAL_COMMON_SQL
         previous_vrsn_file_name_for_git = ORIGINAL_VRSN_SQL
+        output_changelog_file = GITHUB_CHANGELOG_FILE
     elif args.mode == 'local':
-        current_common_file = INSTALL_COMMON_SQL_PREFIXED
-        current_vrsn_file = INSTALL_VRSN_SQL_PREFIXED
-        # For 'local' mode, previous files are read from LAST_INSTALL_DIR
-        previous_common_file_name_for_local_dir = INSTALL_COMMON_SQL_PREFIXED
-        previous_vrsn_file_name_for_local_dir = INSTALL_VRSN_SQL_PREFIXED
+        current_common_file_to_read = LOCAL_INSTALL_COMMON_SQL_PREFIXED
+        current_vrsn_file_to_read = LOCAL_INSTALL_VRSN_SQL_PREFIXED
+        previous_common_file_name_for_local_dir = LOCAL_INSTALL_COMMON_SQL_PREFIXED
+        previous_vrsn_file_name_for_local_dir = LOCAL_INSTALL_VRSN_SQL_PREFIXED
+        output_changelog_file = LOCAL_CHANGELOG_FILE_PREFIXED
 
-    # Read current content
-    new_common_content = open(current_common_file, 'r').read()
-    new_vrsn_content = open(current_vrsn_file, 'r').read()
+
+    # Read current content (from where the script is run)
+    new_common_content = open(current_common_file_to_read, 'r').read()
+    new_vrsn_content = open(current_vrsn_file_to_read, 'r').read()
 
     if args.mode == 'github-actions':
         try:
@@ -146,11 +152,11 @@ def main_logic():
             sys.exit(0)
             
         old_changelog_content = ""
-        if os.path.exists("CHANGELOG.md"):
-            with open("CHANGELOG.md", "r") as f:
+        if os.path.exists(output_changelog_file):
+            with open(output_changelog_file, "r") as f:
                 old_changelog_content = f.read()
 
-        with open("CHANGELOG.md", "w") as f:
+        with open(output_changelog_file, "w") as f:
             f.write(changelog_block)
             if old_changelog_content:
                 f.write("\n" + old_changelog_content)
@@ -177,14 +183,14 @@ def main_logic():
         
         if "No significant changes" in common_changes and "No significant changes" in vrsn_changes and (previous_common_content or previous_vrsn_content):
             print("No schema changes detected locally against LAST_INSTALL.")
-            if os.path.exists("CHANGELOG_generated.md"):
-                os.remove("CHANGELOG_generated.md")
+            if os.path.exists(output_changelog_file):
+                os.remove(output_changelog_file)
             sys.exit(0)
 
-        with open("CHANGELOG_generated.md", "w") as f:
+        with open(output_changelog_file, "w") as f:
             f.write(changelog_block)
         
-        print("\n--- Changelog generated ---")
+        print(f"\n--- Changelog generato: {output_changelog_file} ---")
         print(changelog_block)
 
 if __name__ == "__main__":
