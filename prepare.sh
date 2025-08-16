@@ -58,7 +58,7 @@ if [ ! -d "$LAST_INSTALL_DIR" ]; then
     mkdir -p "$LAST_INSTALL_DIR"
 fi
 
-# THIS LINE MUST BE EXACTLY AS SHOWN:
+# Call Python script for local changelog generation
 python3 compare_schemas.py --mode local --last-install-dir "$LAST_INSTALL_DIR"
 
 echo "--- Next steps ---"
@@ -67,5 +67,6 @@ echo "2. Review 'CHANGELOG_generated.md' to understand the changes before procee
 echo "3. Run the installation files using psql."
 echo "   Example: psql -d your_db_name -f $COMMON_INSTALL_SQL"
 echo "            psql -d your_db_name -f $VRSN_INSTALL_SQL"
-echo "4. After a successful installation, copy the generated files to the '$LAST_INSTALL_DIR' directory for future comparisons."
-echo "   Example: cp $COMMON_INSTALL_SQL $VRSN_INSTALL_SQL $LAST_INSTALL_DIR/"
+echo "4. After a successful installation, copy the *generated installation files* to the '$LAST_INSTALL_DIR' directory for future comparisons."
+echo "   Example: cp $COMMON_INSTALL_SQL $LAST_INSTALL_DIR/" # Corrected copy operation
+echo "            cp $VRSN_INSTALL_SQL $LAST_INSTALL_DIR/"   # Corrected copy operation
