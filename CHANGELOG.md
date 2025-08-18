@@ -7,8 +7,11 @@ No significant changes detected.
 
 ## vrsn.sql
 🔄 Modified: AGGREGATE 'entity_fullname_type_agg(vrsn.entity_fullname_type)' (Schema: 'vrsn')
+
 🔄 Modified: AGGREGATE 'entity_fullname_type_string_agg(vrsn.entity_fullname_type, text)' (Schema: 'vrsn')
+
 🔄 Modified: DEFAULT 'trigger_activation_record_stack_trace_parent status' (Schema: 'vrsn')
+
 🔄 Modified: DOMAIN 'audit_record_jsonb_domain' (Schema: 'vrsn')
 🔄 Modified: DOMAIN 'boolean_true_domain' (Schema: 'vrsn')
 🔄 Modified: DOMAIN 'cached_attribute' (Schema: 'vrsn')
