@@ -72,16 +72,16 @@ def compare_schemas(old_objects, new_objects):
 
     added_keys = sorted(list(new_keys - old_keys))
     for key in added_keys:
-        changelog.append(f"✅ Added: {key[0]} '{key[2]}' (Schema: '{key[1]}')") # Type, Name, Schema
+        changelog.append(f"✅ Added: {key[0]} '{key[2]}' (Schema: '{key[1]}')\n") # Type, Name, Schema
 
     removed_keys = sorted(list(old_keys - new_keys))
     for key in removed_keys:
-        changelog.append(f"❌ Removed: {key[0]} '{key[2]}' (Schema: '{key[1]}')") # Type, Name, Schema
+        changelog.append(f"❌ Removed: {key[0]} '{key[2]}' (Schema: '{key[1]}')\n") # Type, Name, Schema
 
     modified_keys = sorted(list(old_keys.intersection(new_keys)))
     for key in modified_keys:
         if old_objects[key] != new_objects[key]:
-            changelog.append(f"🔄 Modified: {key[0]} '{key[2]}' (Schema: '{key[1]}')") # Type, Name, Schema
+            changelog.append(f"🔄 Modified: {key[0]} '{key[2]}' (Schema: '{key[1]}')\n") # Type, Name, Schema
 
     return "\n".join(changelog) if changelog else "No significant changes detected.\n"
 
