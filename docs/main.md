@@ -49,6 +49,8 @@ This bitemporal framework for PostgreSQL automates the management of historical 
 
 ### In-depth Sections
 
+* [**Solution Constraints**](solution_constraints.md): This section provides the main differences, reserved words, constraints, strongly recomended best practice.
+
 * [**Action Hints**](action_hints.md): This section provides a detailed explanation of how `action_hints` can be used to customize trigger behavior.
 
 * [**Updating Entity Attributes with `cached_attribute`**](object_field_behavior.md): This section describes how to enable and use the overwriting of entity attributes using the `vrsn.cached_attribute` domain.
