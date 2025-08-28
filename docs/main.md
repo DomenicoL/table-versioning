@@ -21,6 +21,8 @@ This bitemporal framework for PostgreSQL automates the management of historical 
 
 * **`vrsn.historic_entity_behaviour` Type**: An ENUM type that defines how an entity should be historicized, with options like `'always'`, `'never'`, or `'on_main_fields'`, allowing for fine-grained control.
 
+* **`vrsn` Schema**: this is a collection of functions used to retrieve information about other schemas, we discourage to install in production environment.
+
 ---
 
 ### Workflow for Entity Management
