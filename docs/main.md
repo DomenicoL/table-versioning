@@ -6,7 +6,7 @@ This bitemporal framework for PostgreSQL automates the management of historical 
 
 ---
 
-### Architecture and Key Components
+## Architecture and Key Components
 
 * **`common` Schema**: Contains essential utility functions and data types that support the solution, such as `common.key_value_list` for handling structured data.
 
@@ -24,7 +24,7 @@ This bitemporal framework for PostgreSQL automates the management of historical 
 
 ---
 
-### Workflow for Entity Management
+## Workflow for Entity Management
 
 1.  **Table Creation**: Start with any entity from your data model and create a corresponding table with the `_current` suffix. This table must include the `bt_info` column of type `vrsn.bitemporal_record`, preferably as the first column, and it should be excluded from the primary key.
 
@@ -38,7 +38,7 @@ This bitemporal framework for PostgreSQL automates the management of historical 
 
 ---
 
-### Data Manipulation (DML)
+## Data Manipulation (DML)
 
 * **Entry Point**: All data manipulation operations (`INSERT`, `UPDATE`) must be performed exclusively on the **view**, never directly on the tables.
 
@@ -48,7 +48,7 @@ This bitemporal framework for PostgreSQL automates the management of historical 
 
 ---
 
-### In-depth Sections
+## In-depth Sections
 
 * [**Install**](install.md): This section provides requirements and step to install and upgrade the solution.
 * [**Solution Constraints**](solution_constraints.md): This section provides the main differences, reserved words, constraints, strongly recomended best practice.
