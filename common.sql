@@ -3,9 +3,7 @@
 --
 
 -- Dumped from database version 15.7 (Ubuntu 15.7-0ubuntu0.23.10.1)
--- Dumped by pg_dump version 16.9 (Ubuntu 16.9-0ubuntu0.24.04.1)
-
--- Started on 2025-08-09 20:41:36 CEST
+-- Dumped by pg_dump version 15.7 (Ubuntu 15.7-0ubuntu0.23.10.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -19,18 +17,14 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- TOC entry 15 (class 2615 OID 18405)
--- Name: common; Type: SCHEMA; Schema: -; Owner: clc
+-- Name: common; Type: SCHEMA; Schema: -; Owner: -
 --
 
 CREATE SCHEMA common;
 
 
-ALTER SCHEMA common OWNER TO clc;
-
 --
--- TOC entry 1744 (class 1247 OID 20593)
--- Name: key_value_list; Type: TYPE; Schema: common; Owner: clc
+-- Name: key_value_list; Type: TYPE; Schema: common; Owner: -
 --
 
 CREATE TYPE common.key_value_list AS (
@@ -41,20 +35,318 @@ CREATE TYPE common.key_value_list AS (
 );
 
 
-ALTER TYPE common.key_value_list OWNER TO clc;
-
 --
--- TOC entry 4648 (class 0 OID 0)
--- Dependencies: 1744
--- Name: TYPE key_value_list; Type: COMMENT; Schema: common; Owner: clc
+-- Name: TYPE key_value_list; Type: COMMENT; Schema: common; Owner: -
 --
 
 COMMENT ON TYPE common.key_value_list IS 'Standard representation of a key-value table, with idx for array, and type to better conversion';
 
 
 --
--- TOC entry 986 (class 1255 OID 29127)
--- Name: __type__get_canonical_output_name(text); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: __jsonb_schema__validate_enum(jsonb, jsonb, text); Type: FUNCTION; Schema: common; Owner: -
+--
+
+CREATE FUNCTION common.__jsonb_schema__validate_enum(data jsonb, schema jsonb, path text) RETURNS TABLE(is_valid boolean, errors text[])
+    LANGUAGE plpgsql
+    AS $$
+declare
+	error_list text[] := array[]::text[];
+begin
+	if not (schema->'enum' @> to_jsonb(data)) then
+		error_list := error_list || format('Path %s: value %s not in enum %s', 
+			path, data::text, (schema->'enum')::text);
+	end if;
+	
+	return query select array_length(error_list, 1) is null, error_list;
+end;
+$$;
+
+
+--
+-- Name: FUNCTION __jsonb_schema__validate_enum(data jsonb, schema jsonb, path text); Type: COMMENT; Schema: common; Owner: -
+--
+
+COMMENT ON FUNCTION common.__jsonb_schema__validate_enum(data jsonb, schema jsonb, path text) IS '[PRIVATA] Valida che il valore sia presente nell''array enum specificato nello schema.';
+
+
+--
+-- Name: __jsonb_schema__validate_format(jsonb, jsonb, text); Type: FUNCTION; Schema: common; Owner: -
+--
+
+CREATE FUNCTION common.__jsonb_schema__validate_format(data jsonb, schema jsonb, path text) RETURNS TABLE(is_valid boolean, errors text[])
+    LANGUAGE plpgsql
+    AS $_$
+declare
+	format_type text;
+	data_text text;
+	error_list text[] := array[]::text[];
+begin
+	-- Solo stringhe possono avere format
+	if jsonb_typeof(data) != 'string' then
+		return query select true, array[]::text[];
+		return;
+	end if;
+	
+	format_type := schema->>'format';
+	data_text := data #>> '{}'; -- estrae il valore stringa
+	
+	case format_type
+		when 'date-time' then
+			-- RFC 3339 date-time format
+			if not (data_text ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$') then
+				error_list := error_list || format('Path %s: invalid date-time format "%s"', path, data_text);
+			else
+				-- Verifica che sia una data valida
+				begin
+					perform data_text::timestamp with time zone;
+				exception
+					when others then
+						error_list := error_list || format('Path %s: invalid date-time value "%s"', path, data_text);
+				end;
+			end if;
+			
+		when 'date' then
+			-- YYYY-MM-DD format
+			if not (data_text ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$') then
+				error_list := error_list || format('Path %s: invalid date format "%s"', path, data_text);
+			else
+				begin
+					perform data_text::date;
+				exception
+					when others then
+						error_list := error_list || format('Path %s: invalid date value "%s"', path, data_text);
+				end;
+			end if;
+			
+		when 'time' then
+			-- HH:MM:SS format
+			if not (data_text ~ '^[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?$') then
+				error_list := error_list || format('Path %s: invalid time format "%s"', path, data_text);
+			else
+				begin
+					perform data_text::time;
+				exception
+					when others then
+						error_list := error_list || format('Path %s: invalid time value "%s"', path, data_text);
+				end;
+			end if;
+			
+		when 'email' then
+			-- Basic email validation
+			if not (data_text ~ '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$') then
+				error_list := error_list || format('Path %s: invalid email format "%s"', path, data_text);
+			end if;
+			
+		when 'uri' then
+			-- Basic URI validation
+			if not (data_text ~ '^[a-zA-Z][a-zA-Z0-9+.-]*:') then
+				error_list := error_list || format('Path %s: invalid uri format "%s"', path, data_text);
+			end if;
+			
+		when 'uuid' then
+			-- UUID v4 format
+			if not (data_text ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$') then
+				error_list := error_list || format('Path %s: invalid uuid format "%s"', path, data_text);
+			else
+				begin
+					perform data_text::uuid;
+				exception
+					when others then
+						error_list := error_list || format('Path %s: invalid uuid value "%s"', path, data_text);
+				end;
+			end if;
+			
+		when 'ipv4' then
+			-- IPv4 format
+			if not (data_text ~ '^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$') then
+				error_list := error_list || format('Path %s: invalid ipv4 format "%s"', path, data_text);
+			else
+				begin
+					perform data_text::inet;
+				exception
+					when others then
+						error_list := error_list || format('Path %s: invalid ipv4 value "%s"', path, data_text);
+				end;
+			end if;
+			
+		when 'ipv6' then
+			-- Basic IPv6 validation (semplificata)
+			if not (data_text ~ '^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^::1$|^::$') then
+				error_list := error_list || format('Path %s: invalid ipv6 format "%s"', path, data_text);
+			end if;
+			
+		else
+			-- Format non supportato, ma non è un errore
+			null;
+	end case;
+	
+	return query select array_length(error_list, 1) is null, error_list;
+end;
+$_$;
+
+
+--
+-- Name: FUNCTION __jsonb_schema__validate_format(data jsonb, schema jsonb, path text); Type: COMMENT; Schema: common; Owner: -
+--
+
+COMMENT ON FUNCTION common.__jsonb_schema__validate_format(data jsonb, schema jsonb, path text) IS '[PRIVATA] Valida i formati stringa (date-time, date, time, email, uri, uuid, ipv4, ipv6) secondo le specifiche JSON Schema.';
+
+
+--
+-- Name: __jsonb_schema__validate_properties(jsonb, jsonb, text); Type: FUNCTION; Schema: common; Owner: -
+--
+
+CREATE FUNCTION common.__jsonb_schema__validate_properties(data jsonb, schema jsonb, path text) RETURNS TABLE(is_valid boolean, errors text[])
+    LANGUAGE plpgsql
+    AS $_$
+declare
+	prop_name text;
+	prop_schema jsonb;
+	prop_data jsonb;
+	error_list text[] := array[]::text[];
+	temp_errors text[];
+	validation_result boolean;
+	current_path text;
+begin
+	-- Itera su ogni proprietà definita nello schema
+	for prop_name, prop_schema in
+		select key, value from jsonb_each(schema->'properties')
+	loop
+		current_path := format('%s.%s', path, prop_name);
+		
+		if data ? prop_name then
+			prop_data := data->prop_name;
+			
+			-- Gestisce $ref
+			if prop_schema ? '$ref' then
+				-- Risolve il riferimento (implementazione semplificata)
+				declare
+					ref_path text := prop_schema->>'$ref';
+					definitions_schema jsonb;
+				begin
+					if ref_path like '#/definitions/%' then
+						ref_path := replace(ref_path, '#/definitions/', '');
+						definitions_schema := schema->'definitions'->ref_path;
+						if definitions_schema is not null then
+							prop_schema := definitions_schema;
+						end if;
+					end if;
+				end;
+			end if;
+			
+			-- Valida ricorsivamente
+			select * into validation_result, temp_errors 
+			from common.jsonb_schema__validate(prop_data, prop_schema);
+			
+			if not validation_result then
+				error_list := error_list || temp_errors;
+			end if;
+		end if;
+	end loop;
+	
+	-- Controlla additionalProperties
+	if schema ? 'additionalProperties' and (schema->'additionalProperties')::boolean = false then
+		for prop_name in
+			select key from jsonb_object_keys(data) key
+			where not (schema->'properties' ? key)
+		loop
+			error_list := error_list || format('Path %s.%s: additional property not allowed', 
+				path, prop_name);
+		end loop;
+	end if;
+	
+	return query select array_length(error_list, 1) is null, error_list;
+end;
+$_$;
+
+
+--
+-- Name: FUNCTION __jsonb_schema__validate_properties(data jsonb, schema jsonb, path text); Type: COMMENT; Schema: common; Owner: -
+--
+
+COMMENT ON FUNCTION common.__jsonb_schema__validate_properties(data jsonb, schema jsonb, path text) IS '[PRIVATA] Valida le proprietà di un oggetto JSONB contro lo schema. Gestisce validation ricorsiva, $ref, e additionalProperties.';
+
+
+--
+-- Name: __jsonb_schema__validate_required(jsonb, jsonb, text); Type: FUNCTION; Schema: common; Owner: -
+--
+
+CREATE FUNCTION common.__jsonb_schema__validate_required(data jsonb, schema jsonb, path text) RETURNS TABLE(is_valid boolean, errors text[])
+    LANGUAGE plpgsql
+    AS $$
+declare
+	required_field text;
+	error_list text[] := array[]::text[];
+begin
+	for required_field in
+		select jsonb_array_elements_text(schema->'required')
+	loop
+		if not (data ? required_field) then
+			error_list := error_list || format('Path %s: missing required property "%s"', 
+				path, required_field);
+		end if;
+	end loop;
+	
+	return query select array_length(error_list, 1) is null, error_list;
+end;
+$$;
+
+
+--
+-- Name: FUNCTION __jsonb_schema__validate_required(data jsonb, schema jsonb, path text); Type: COMMENT; Schema: common; Owner: -
+--
+
+COMMENT ON FUNCTION common.__jsonb_schema__validate_required(data jsonb, schema jsonb, path text) IS '[PRIVATA] Verifica che tutti i campi obbligatori specificati nell''array "required" dello schema siano presenti nel documento.';
+
+
+--
+-- Name: __jsonb_schema__validate_type(jsonb, jsonb, text); Type: FUNCTION; Schema: common; Owner: -
+--
+
+CREATE FUNCTION common.__jsonb_schema__validate_type(data jsonb, schema jsonb, path text) RETURNS TABLE(is_valid boolean, errors text[])
+    LANGUAGE plpgsql
+    AS $$
+declare
+	expected_type jsonb;
+	actual_type text;
+	error_list text[] := array[]::text[];
+begin
+	expected_type := schema->'type';
+	actual_type := jsonb_typeof(data);
+	
+	if expected_type is null then
+		return query select true, array[]::text[];
+		return;
+	end if;
+	
+	-- Gestisce array di tipi (es. ["string", "null"])
+	if jsonb_typeof(expected_type) = 'array' then
+		if not (expected_type @> to_jsonb(actual_type)) then
+			error_list := error_list || format('Path %s: expected one of %s, got %s', 
+				path, expected_type::text, actual_type);
+		end if;
+	else
+		-- Tipo singolo
+		if expected_type::text != format('"%s"', actual_type) then
+			error_list := error_list || format('Path %s: expected %s, got %s', 
+				path, expected_type::text, actual_type);
+		end if;
+	end if;
+	
+	return query select array_length(error_list, 1) is null, error_list;
+end;
+$$;
+
+
+--
+-- Name: FUNCTION __jsonb_schema__validate_type(data jsonb, schema jsonb, path text); Type: COMMENT; Schema: common; Owner: -
+--
+
+COMMENT ON FUNCTION common.__jsonb_schema__validate_type(data jsonb, schema jsonb, path text) IS '[PRIVATA] Valida il tipo di un valore JSONB contro lo schema. Supporta tipi singoli e array di tipi (es. ["string", "null"]).';
+
+
+--
+-- Name: __type__get_canonical_output_name(text); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.__type__get_canonical_output_name(internal_type text) RETURNS text
@@ -99,11 +391,8 @@ end;
 $$;
 
 
-ALTER FUNCTION common.__type__get_canonical_output_name(internal_type text) OWNER TO clc;
-
 --
--- TOC entry 1010 (class 1255 OID 29126)
--- Name: __type__normalize_name(text); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: __type__normalize_name(text); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.__type__normalize_name(type_name text) RETURNS text
@@ -140,11 +429,8 @@ end;
 $$;
 
 
-ALTER FUNCTION common.__type__normalize_name(type_name text) OWNER TO clc;
-
 --
--- TOC entry 879 (class 1255 OID 19907)
--- Name: _d_jsonb_keys_to_array(jsonb); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: _d_jsonb_keys_to_array(jsonb); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common._d_jsonb_keys_to_array(_jb jsonb) RETURNS jsonb
@@ -206,20 +492,42 @@ end;
 $_$;
 
 
-ALTER FUNCTION common._d_jsonb_keys_to_array(_jb jsonb) OWNER TO clc;
-
 --
--- TOC entry 4649 (class 0 OID 0)
--- Dependencies: 879
--- Name: FUNCTION _d_jsonb_keys_to_array(_jb jsonb); Type: COMMENT; Schema: common; Owner: clc
+-- Name: FUNCTION _d_jsonb_keys_to_array(_jb jsonb); Type: COMMENT; Schema: common; Owner: -
 --
 
 COMMENT ON FUNCTION common._d_jsonb_keys_to_array(_jb jsonb) IS 'From scratch a json array becames a list of key value. This function correct this situation';
 
 
 --
--- TOC entry 809 (class 1255 OID 19902)
--- Name: bind_variable(text, extensions.hstore, text, text); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: _d_jsonb_recursive_left_merge(jsonb, jsonb); Type: FUNCTION; Schema: common; Owner: -
+--
+
+CREATE FUNCTION common._d_jsonb_recursive_left_merge(first_jb jsonb, second_jb jsonb) RETURNS jsonb
+    LANGUAGE sql
+    AS $$
+/*
+from https://stackoverflow.com/questions/42944888/merging-jsonb-values-in-postgresql
+*/
+select 
+    jsonb_object_agg(
+        ka, 
+        case 
+            when va is null then vb 
+            when vb is null then va 
+            when va = vb then vb
+			WHEN jsonb_typeof(va) = 'array' AND jsonb_typeof(vb) = 'array' THEN va || vb
+            when jsonb_typeof(va) <> 'object' or jsonb_typeof(vb) <> 'object' then vb 
+            else common.jsonb_recursive_merge(va, vb) end 
+        ) 
+    from jsonb_each(first_jb) e1(ka, va) 
+    left join jsonb_each(second_jb) e2(kb, vb) on ka = kb;
+
+$$;
+
+
+--
+-- Name: bind_variable(text, extensions.hstore, text, text); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.bind_variable(pattern_to_process text, variable_to_process extensions.hstore, start_delimiter text DEFAULT ':'::text, end_delimiter text DEFAULT ':'::text) RETURNS text
@@ -253,11 +561,8 @@ begin
 end;$_$;
 
 
-ALTER FUNCTION common.bind_variable(pattern_to_process text, variable_to_process extensions.hstore, start_delimiter text, end_delimiter text) OWNER TO clc;
-
 --
--- TOC entry 810 (class 1255 OID 19903)
--- Name: coalesce_array(anycompatiblearray); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: coalesce_array(anycompatiblearray); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.coalesce_array(array_to_collapse anycompatiblearray) RETURNS anycompatible
@@ -281,11 +586,8 @@ begin
 end;$$;
 
 
-ALTER FUNCTION common.coalesce_array(array_to_collapse anycompatiblearray) OWNER TO clc;
-
 --
--- TOC entry 811 (class 1255 OID 19904)
--- Name: dquote_literal(text); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: dquote_literal(text); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.dquote_literal(text_to_dquote text) RETURNS text
@@ -303,11 +605,8 @@ CREATE FUNCTION common.dquote_literal(text_to_dquote text) RETURNS text
 END;
 
 
-ALTER FUNCTION common.dquote_literal(text_to_dquote text) OWNER TO clc;
-
 --
--- TOC entry 968 (class 1255 OID 22816)
--- Name: get_diagnostic_text(integer); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: get_diagnostic_text(integer); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.get_diagnostic_text(skip_lines integer DEFAULT 0) RETURNS text
@@ -379,11 +678,8 @@ end;
 $_$;
 
 
-ALTER FUNCTION common.get_diagnostic_text(skip_lines integer) OWNER TO clc;
-
 --
--- TOC entry 875 (class 1255 OID 20559)
--- Name: hstore_strip_nulls(extensions.hstore); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: hstore_strip_nulls(extensions.hstore); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.hstore_strip_nulls(hstore_to_strip extensions.hstore) RETURNS extensions.hstore
@@ -395,11 +691,8 @@ CREATE FUNCTION common.hstore_strip_nulls(hstore_to_strip extensions.hstore) RET
 END;
 
 
-ALTER FUNCTION common.hstore_strip_nulls(hstore_to_strip extensions.hstore) OWNER TO clc;
-
 --
--- TOC entry 964 (class 1255 OID 19905)
--- Name: is_empty(anycompatible); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: is_empty(anycompatible); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.is_empty(value_to_test anycompatible) RETURNS boolean
@@ -475,25 +768,31 @@ begin
 end;$$;
 
 
-ALTER FUNCTION common.is_empty(value_to_test anycompatible) OWNER TO clc;
+--
+-- Name: jsonb_array_to_string(jsonb, text); Type: FUNCTION; Schema: common; Owner: -
+--
+
+CREATE FUNCTION common.jsonb_array_to_string(arr jsonb, separator text DEFAULT ', '::text) RETURNS text
+    LANGUAGE sql IMMUTABLE PARALLEL SAFE
+    BEGIN ATOMIC
+ SELECT string_agg(text_result.value, jsonb_array_to_string.separator) AS string_agg
+    FROM jsonb_array_elements_text(jsonb_array_to_string.arr) text_result(value);
+END;
+
 
 --
--- TOC entry 803 (class 1255 OID 19906)
--- Name: jsonb_array_to_text_array(jsonb); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: jsonb_array_to_text_array(jsonb); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.jsonb_array_to_text_array(_js jsonb) RETURNS text[]
     LANGUAGE sql IMMUTABLE STRICT PARALLEL SAFE
     BEGIN ATOMIC
- SELECT ARRAY( SELECT jsonb_array_elements_text(_js) AS jsonb_array_elements_text) AS "array";
+ SELECT ARRAY( SELECT jsonb_array_elements_text(_js) AS jsonb_array_elements_text) AS text_array;
 END;
 
 
-ALTER FUNCTION common.jsonb_array_to_text_array(_js jsonb) OWNER TO clc;
-
 --
--- TOC entry 1016 (class 1255 OID 29395)
--- Name: jsonb_extract_multiple_paths(jsonb, text[]); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: jsonb_extract_multiple_paths(jsonb, text[]); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.jsonb_extract_multiple_paths(json_data jsonb, path_patterns text[]) RETURNS jsonb
@@ -545,11 +844,8 @@ end;
 $_$;
 
 
-ALTER FUNCTION common.jsonb_extract_multiple_paths(json_data jsonb, path_patterns text[]) OWNER TO clc;
-
 --
--- TOC entry 1015 (class 1255 OID 29399)
--- Name: jsonb_extract_recursive(jsonb, jsonb); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: jsonb_extract_recursive(jsonb, jsonb); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.jsonb_extract_recursive(json_data jsonb, jb_patterns jsonb) RETURNS jsonb
@@ -672,11 +968,8 @@ end;
 $_$;
 
 
-ALTER FUNCTION common.jsonb_extract_recursive(json_data jsonb, jb_patterns jsonb) OWNER TO clc;
-
 --
--- TOC entry 880 (class 1255 OID 19908)
--- Name: jsonb_keys_to_array(jsonb, text); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: jsonb_keys_to_array(jsonb, text); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.jsonb_keys_to_array(_jb jsonb, pattern text DEFAULT NULL::text) RETURNS jsonb
@@ -755,12 +1048,8 @@ end;
 $_$;
 
 
-ALTER FUNCTION common.jsonb_keys_to_array(_jb jsonb, pattern text) OWNER TO clc;
-
 --
--- TOC entry 4650 (class 0 OID 0)
--- Dependencies: 880
--- Name: FUNCTION jsonb_keys_to_array(_jb jsonb, pattern text); Type: COMMENT; Schema: common; Owner: clc
+-- Name: FUNCTION jsonb_keys_to_array(_jb jsonb, pattern text); Type: COMMENT; Schema: common; Owner: -
 --
 
 COMMENT ON FUNCTION common.jsonb_keys_to_array(_jb jsonb, pattern text) IS 'If jsonb keys are in format __%anydigits__ represent a malfomed array
@@ -773,8 +1062,7 @@ This function correct this situation';
 
 
 --
--- TOC entry 872 (class 1255 OID 20543)
--- Name: jsonb_linearize(jsonb, text); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: jsonb_linearize(jsonb, text); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.jsonb_linearize(jb jsonb, prefix text DEFAULT ''::text) RETURNS jsonb
@@ -842,12 +1130,8 @@ end;
 $$;
 
 
-ALTER FUNCTION common.jsonb_linearize(jb jsonb, prefix text) OWNER TO clc;
-
 --
--- TOC entry 4651 (class 0 OID 0)
--- Dependencies: 872
--- Name: FUNCTION jsonb_linearize(jb jsonb, prefix text); Type: COMMENT; Schema: common; Owner: clc
+-- Name: FUNCTION jsonb_linearize(jb jsonb, prefix text); Type: COMMENT; Schema: common; Owner: -
 --
 
 COMMENT ON FUNCTION common.jsonb_linearize(jb jsonb, prefix text) IS 'Starting with a jsonb (usually coherent with a jason schema)
@@ -860,8 +1144,7 @@ Output is yet a jsonb';
 
 
 --
--- TOC entry 926 (class 1255 OID 22431)
--- Name: jsonb_linearize_to_key_value(jsonb, text); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: jsonb_linearize_to_key_value(jsonb, text); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.jsonb_linearize_to_key_value(jb jsonb, prefix text DEFAULT ''::text) RETURNS SETOF common.key_value_list
@@ -915,11 +1198,8 @@ begin
 end;$_$;
 
 
-ALTER FUNCTION common.jsonb_linearize_to_key_value(jb jsonb, prefix text) OWNER TO clc;
-
 --
--- TOC entry 1007 (class 1255 OID 29392)
--- Name: jsonb_recursive_intersect(jsonb, jsonb); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: jsonb_recursive_intersect(jsonb, jsonb); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.jsonb_recursive_intersect(first_jb jsonb, second_jb jsonb) RETURNS jsonb
@@ -945,11 +1225,35 @@ select
 $$;
 
 
-ALTER FUNCTION common.jsonb_recursive_intersect(first_jb jsonb, second_jb jsonb) OWNER TO clc;
+--
+-- Name: jsonb_recursive_left_merge(jsonb, jsonb, boolean); Type: FUNCTION; Schema: common; Owner: -
+--
+
+CREATE FUNCTION common.jsonb_recursive_left_merge(first_jb jsonb, second_jb jsonb, strip_nulls boolean DEFAULT false) RETURNS jsonb
+    LANGUAGE sql
+    AS $$
+/*
+from https://stackoverflow.com/questions/42944888/merging-jsonb-values-in-postgresql
+*/
+select 
+    jsonb_object_agg(
+        ka, 
+        case 
+            when va is null then vb 
+            when vb is null then va 
+            when va = vb then vb
+			WHEN jsonb_typeof(va) = 'array' AND jsonb_typeof(vb) = 'array' THEN va || vb
+            when jsonb_typeof(va) <> 'object' or jsonb_typeof(vb) <> 'object' then vb 
+            else common.jsonb_recursive_merge(va, vb) end 
+        ) 
+    from jsonb_each(first_jb) e1(ka, va) 
+    left join jsonb_each(second_jb) e2(kb, vb) on ka = kb and (not strip_nulls or jsonb_typeof(vb) <> 'null');
+
+$$;
+
 
 --
--- TOC entry 813 (class 1255 OID 19909)
--- Name: jsonb_recursive_merge(jsonb[]); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: jsonb_recursive_merge(jsonb[]); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.jsonb_recursive_merge(jb_list jsonb[]) RETURNS jsonb
@@ -969,11 +1273,8 @@ begin
 end;$$;
 
 
-ALTER FUNCTION common.jsonb_recursive_merge(jb_list jsonb[]) OWNER TO clc;
-
 --
--- TOC entry 814 (class 1255 OID 19910)
--- Name: jsonb_recursive_merge(jsonb, jsonb); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: jsonb_recursive_merge(jsonb, jsonb); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.jsonb_recursive_merge(first_jb jsonb, second_jb jsonb) RETURNS jsonb
@@ -998,11 +1299,116 @@ select
 $$;
 
 
-ALTER FUNCTION common.jsonb_recursive_merge(first_jb jsonb, second_jb jsonb) OWNER TO clc;
+--
+-- Name: jsonb_schema__get_errors(jsonb, jsonb); Type: FUNCTION; Schema: common; Owner: -
+--
+
+CREATE FUNCTION common.jsonb_schema__get_errors(data jsonb, schema jsonb) RETURNS text[]
+    LANGUAGE sql
+    AS $$
+	select (common.jsonb_schema__validate(data, schema)).errors;
+$$;
+
 
 --
--- TOC entry 815 (class 1255 OID 19911)
--- Name: jsonb_set_building_path(jsonb, extensions.ltree, jsonb, boolean); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: FUNCTION jsonb_schema__get_errors(data jsonb, schema jsonb); Type: COMMENT; Schema: common; Owner: -
+--
+
+COMMENT ON FUNCTION common.jsonb_schema__get_errors(data jsonb, schema jsonb) IS 'Funzione di convenienza che restituisce solo l''array degli errori di validazione con percorsi dettagliati.';
+
+
+--
+-- Name: jsonb_schema__is_valid(jsonb, jsonb); Type: FUNCTION; Schema: common; Owner: -
+--
+
+CREATE FUNCTION common.jsonb_schema__is_valid(data jsonb, schema jsonb) RETURNS boolean
+    LANGUAGE sql
+    AS $$
+	select (common.jsonb_schema__validate(data, schema)).is_valid;
+$$;
+
+
+--
+-- Name: FUNCTION jsonb_schema__is_valid(data jsonb, schema jsonb); Type: COMMENT; Schema: common; Owner: -
+--
+
+COMMENT ON FUNCTION common.jsonb_schema__is_valid(data jsonb, schema jsonb) IS 'Funzione di convenienza che restituisce solo un boolean indicando se il documento JSONB è valido secondo lo schema fornito.';
+
+
+--
+-- Name: jsonb_schema__validate(jsonb, jsonb); Type: FUNCTION; Schema: common; Owner: -
+--
+
+CREATE FUNCTION common.jsonb_schema__validate(data jsonb, schema jsonb) RETURNS TABLE(is_valid boolean, errors text[])
+    LANGUAGE plpgsql
+    AS $_$
+declare
+	validation_result boolean := true;
+	error_list text[] := array[]::text[];
+	temp_errors text[];
+begin
+	-- Valida il tipo principale
+	select * into validation_result, temp_errors 
+	from common.__jsonb_schema__validate_type(data, schema, '$');
+	
+	if not validation_result then
+		error_list := error_list || temp_errors;
+	end if;
+	
+	-- Valida le proprietà se è un oggetto
+	if jsonb_typeof(data) = 'object' and schema ? 'properties' then
+		select * into validation_result, temp_errors 
+		from common.__jsonb_schema__validate_properties(data, schema, '$');
+		
+		if not validation_result then
+			error_list := error_list || temp_errors;
+		end if;
+	end if;
+	
+	-- Valida i required fields
+	if schema ? 'required' then
+		select * into validation_result, temp_errors 
+		from common.__jsonb_schema__validate_required(data, schema, '$');
+		
+		if not validation_result then
+			error_list := error_list || temp_errors;
+		end if;
+	end if;
+	
+	-- Valida enum se presente
+	if schema ? 'enum' then
+		select * into validation_result, temp_errors 
+		from common.__jsonb_schema__validate_enum(data, schema, '$');
+		
+		if not validation_result then
+			error_list := error_list || temp_errors;
+		end if;
+	end if;
+	
+	-- Valida format se presente
+	if schema ? 'format' then
+		select * into validation_result, temp_errors 
+		from common.__jsonb_schema__validate_format(data, schema, '$');
+		
+		if not validation_result then
+			error_list := error_list || temp_errors;
+		end if;
+	end if;
+	
+	return query select array_length(error_list, 1) is null, error_list;
+end;
+$_$;
+
+
+--
+-- Name: FUNCTION jsonb_schema__validate(data jsonb, schema jsonb); Type: COMMENT; Schema: common; Owner: -
+--
+
+COMMENT ON FUNCTION common.jsonb_schema__validate(data jsonb, schema jsonb) IS 'Valida un documento JSONB contro un JSON Schema. Restituisce sia il risultato della validazione che un array di errori dettagliati con i percorsi degli errori.';
+
+
+--
+-- Name: jsonb_set_building_path(jsonb, extensions.ltree, jsonb, boolean); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.jsonb_set_building_path(jsonb_in jsonb, key_to_set extensions.ltree, value_to_set jsonb, create_if_missing boolean DEFAULT true) RETURNS jsonb
@@ -1055,11 +1461,8 @@ end;
 $$;
 
 
-ALTER FUNCTION common.jsonb_set_building_path(jsonb_in jsonb, key_to_set extensions.ltree, value_to_set jsonb, create_if_missing boolean) OWNER TO clc;
-
 --
--- TOC entry 1014 (class 1255 OID 29401)
--- Name: jsonb_set_building_path(jsonb, text, jsonb, boolean); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: jsonb_set_building_path(jsonb, text, jsonb, boolean); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.jsonb_set_building_path(jsonb_in jsonb, key_to_set text, value_to_set jsonb, create_if_missing boolean DEFAULT true) RETURNS jsonb
@@ -1119,11 +1522,8 @@ end;
 $_$;
 
 
-ALTER FUNCTION common.jsonb_set_building_path(jsonb_in jsonb, key_to_set text, value_to_set jsonb, create_if_missing boolean) OWNER TO clc;
-
 --
--- TOC entry 925 (class 1255 OID 20594)
--- Name: key_value_to_jsonb(common.key_value_list[]); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: key_value_to_jsonb(common.key_value_list[]); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.key_value_to_jsonb(key_value_list_to_process common.key_value_list[]) RETURNS jsonb
@@ -1217,11 +1617,8 @@ end;
 $$;
 
 
-ALTER FUNCTION common.key_value_to_jsonb(key_value_list_to_process common.key_value_list[]) OWNER TO clc;
-
 --
--- TOC entry 816 (class 1255 OID 19912)
--- Name: key_value_to_jsonb(extensions.ltree, jsonb, extensions.ltree); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: key_value_to_jsonb(extensions.ltree, jsonb, extensions.ltree); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.key_value_to_jsonb(path_to_process extensions.ltree, value_to_set jsonb, idx extensions.ltree DEFAULT ''::extensions.ltree) RETURNS jsonb
@@ -1281,11 +1678,8 @@ end;
 $$;
 
 
-ALTER FUNCTION common.key_value_to_jsonb(path_to_process extensions.ltree, value_to_set jsonb, idx extensions.ltree) OWNER TO clc;
-
 --
--- TOC entry 817 (class 1255 OID 19913)
--- Name: quote_for_json(anyelement); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: quote_for_json(anyelement); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.quote_for_json(value_to_quote anyelement) RETURNS text
@@ -1299,11 +1693,8 @@ CREATE FUNCTION common.quote_for_json(value_to_quote anyelement) RETURNS text
 end;$$;
 
 
-ALTER FUNCTION common.quote_for_json(value_to_quote anyelement) OWNER TO clc;
-
 --
--- TOC entry 969 (class 1255 OID 23131)
--- Name: records_equal(record, record, text[]); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: records_equal(record, record, text[]); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.records_equal(record1 record, record2 record, exclude_fields text[] DEFAULT ARRAY[]::text[]) RETURNS boolean
@@ -1321,11 +1712,8 @@ begin
 end;$$;
 
 
-ALTER FUNCTION common.records_equal(record1 record, record2 record, exclude_fields text[]) OWNER TO clc;
-
 --
--- TOC entry 812 (class 1255 OID 19914)
--- Name: regexp_replace_array(text, text, text[], text); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: regexp_replace_array(text, text, text[], text); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.regexp_replace_array(text_to_replace text, pattern text, replacement text[], flags text DEFAULT ''::text) RETURNS text
@@ -1358,20 +1746,15 @@ begin
 end;$$;
 
 
-ALTER FUNCTION common.regexp_replace_array(text_to_replace text, pattern text, replacement text[], flags text) OWNER TO clc;
-
 --
--- TOC entry 4652 (class 0 OID 0)
--- Dependencies: 812
--- Name: FUNCTION regexp_replace_array(text_to_replace text, pattern text, replacement text[], flags text); Type: COMMENT; Schema: common; Owner: clc
+-- Name: FUNCTION regexp_replace_array(text_to_replace text, pattern text, replacement text[], flags text); Type: COMMENT; Schema: common; Owner: -
 --
 
 COMMENT ON FUNCTION common.regexp_replace_array(text_to_replace text, pattern text, replacement text[], flags text) IS 'apply a regex_replace for all element of an array';
 
 
 --
--- TOC entry 1001 (class 1255 OID 28155)
--- Name: to_jsonb_with_type(text, text); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: to_jsonb_with_type(text, text); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.to_jsonb_with_type(value_to_convert text, type_of_value text) RETURNS jsonb
@@ -1420,11 +1803,8 @@ end;
 $_$;
 
 
-ALTER FUNCTION common.to_jsonb_with_type(value_to_convert text, type_of_value text) OWNER TO clc;
-
 --
--- TOC entry 1011 (class 1255 OID 28150)
--- Name: type__detect_from_value(text); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: type__detect_from_value(text); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.type__detect_from_value(str_value text) RETURNS text
@@ -1624,11 +2004,8 @@ end;
 $_$;
 
 
-ALTER FUNCTION common.type__detect_from_value(str_value text) OWNER TO clc;
-
 --
--- TOC entry 1008 (class 1255 OID 28151)
--- Name: type__detect_jsonb_field(jsonb); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: type__detect_jsonb_field(jsonb); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.type__detect_jsonb_field(json_value jsonb) RETURNS text
@@ -1692,11 +2069,8 @@ end;
 $$;
 
 
-ALTER FUNCTION common.type__detect_jsonb_field(json_value jsonb) OWNER TO clc;
-
 --
--- TOC entry 987 (class 1255 OID 29128)
--- Name: type__get_wider(text, text); Type: FUNCTION; Schema: common; Owner: clc
+-- Name: type__get_wider(text, text); Type: FUNCTION; Schema: common; Owner: -
 --
 
 CREATE FUNCTION common.type__get_wider(type1 text, type2 text) RETURNS text
@@ -1829,11 +2203,8 @@ end;
 $$;
 
 
-ALTER FUNCTION common.type__get_wider(type1 text, type2 text) OWNER TO clc;
-
 --
--- TOC entry 336 (class 1259 OID 29402)
--- Name: test_jsonb_extract_multiple_paths; Type: VIEW; Schema: common; Owner: clc
+-- Name: test_jsonb_extract_multiple_paths; Type: VIEW; Schema: common; Owner: -
 --
 
 CREATE VIEW common.test_jsonb_extract_multiple_paths AS
@@ -1871,10 +2242,6 @@ UNION ALL
     common.jsonb_extract_multiple_paths(test_data.data, ARRAY['$.complex.*.gamma'::text]) AS pattern_structure
    FROM test_data;
 
-
-ALTER VIEW common.test_jsonb_extract_multiple_paths OWNER TO clc;
-
--- Completed on 2025-08-09 20:41:37 CEST
 
 --
 -- PostgreSQL database dump complete

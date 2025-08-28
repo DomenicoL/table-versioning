@@ -3,9 +3,7 @@
 --
 
 -- Dumped from database version 15.7 (Ubuntu 15.7-0ubuntu0.23.10.1)
--- Dumped by pg_dump version 16.9 (Ubuntu 16.9-0ubuntu0.24.04.1)
-
--- Started on 2025-08-18 22:27:21 CEST
+-- Dumped by pg_dump version 15.7 (Ubuntu 15.7-0ubuntu0.23.10.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -19,7 +17,6 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- TOC entry 18 (class 2615 OID 18409)
 -- Name: vrsn; Type: SCHEMA; Schema: -; Owner: -
 --
 
@@ -27,15 +24,6 @@ CREATE SCHEMA vrsn;
 
 
 --
--- TOC entry 1673 (class 1247 OID 19843)
--- Name: audit_record_jsonb_domain; Type: DOMAIN; Schema: vrsn; Owner: -
---
-
-CREATE DOMAIN vrsn.audit_record_jsonb_domain AS jsonb NOT NULL;
-
-
---
--- TOC entry 1676 (class 1247 OID 19846)
 -- Name: bitemporal_record; Type: TYPE; Schema: vrsn; Owner: -
 --
 
@@ -47,8 +35,6 @@ CREATE TYPE vrsn.bitemporal_record AS (
 
 
 --
--- TOC entry 4854 (class 0 OID 0)
--- Dependencies: 1676
 -- Name: TYPE bitemporal_record; Type: COMMENT; Schema: vrsn; Owner: -
 --
 
@@ -56,7 +42,6 @@ COMMENT ON TYPE vrsn.bitemporal_record IS 'type to manage bitemporal information
 
 
 --
--- TOC entry 1679 (class 1247 OID 19848)
 -- Name: boolean_true_domain; Type: DOMAIN; Schema: vrsn; Owner: -
 --
 
@@ -64,7 +49,27 @@ CREATE DOMAIN vrsn.boolean_true_domain AS boolean NOT NULL DEFAULT true;
 
 
 --
--- TOC entry 1682 (class 1247 OID 19850)
+-- Name: bt_audit_record; Type: DOMAIN; Schema: vrsn; Owner: -
+--
+
+CREATE DOMAIN vrsn.bt_audit_record AS jsonb NOT NULL;
+
+
+--
+-- Name: bt_db_ts_range; Type: DOMAIN; Schema: vrsn; Owner: -
+--
+
+CREATE DOMAIN vrsn.bt_db_ts_range AS tstzrange NOT NULL;
+
+
+--
+-- Name: bt_user_ts_range; Type: DOMAIN; Schema: vrsn; Owner: -
+--
+
+CREATE DOMAIN vrsn.bt_user_ts_range AS tstzrange NOT NULL;
+
+
+--
 -- Name: cached_attribute; Type: DOMAIN; Schema: vrsn; Owner: -
 --
 
@@ -72,7 +77,6 @@ CREATE DOMAIN vrsn.cached_attribute AS jsonb;
 
 
 --
--- TOC entry 1879 (class 1247 OID 22572)
 -- Name: entity_fullname_type; Type: TYPE; Schema: vrsn; Owner: -
 --
 
@@ -83,7 +87,6 @@ CREATE TYPE vrsn.entity_fullname_type AS (
 
 
 --
--- TOC entry 959 (class 1255 OID 22723)
 -- Name: __entity_fullname_type__validate(vrsn.entity_fullname_type); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -95,7 +98,6 @@ END;
 
 
 --
--- TOC entry 1882 (class 1247 OID 22725)
 -- Name: entity_fullname_dmn; Type: DOMAIN; Schema: vrsn; Owner: -
 --
 
@@ -104,7 +106,6 @@ CREATE DOMAIN vrsn.entity_fullname_dmn AS vrsn.entity_fullname_type
 
 
 --
--- TOC entry 1797 (class 1247 OID 21712)
 -- Name: historice_entity_behaviour; Type: TYPE; Schema: vrsn; Owner: -
 --
 
@@ -116,8 +117,6 @@ CREATE TYPE vrsn.historice_entity_behaviour AS ENUM (
 
 
 --
--- TOC entry 4855 (class 0 OID 0)
--- Dependencies: 1797
 -- Name: TYPE historice_entity_behaviour; Type: COMMENT; Schema: vrsn; Owner: -
 --
 
@@ -125,7 +124,23 @@ COMMENT ON TYPE vrsn.historice_entity_behaviour IS 'define the behaviour';
 
 
 --
--- TOC entry 1867 (class 1247 OID 22382)
+-- Name: table_field_details; Type: TYPE; Schema: vrsn; Owner: -
+--
+
+CREATE TYPE vrsn.table_field_details AS (
+	field_name text,
+	data_type text,
+	default_value text,
+	is_nullable boolean,
+	is_pk boolean,
+	pk_order integer,
+	table_order integer,
+	generation_type text,
+	complete_definition text
+);
+
+
+--
 -- Name: tar_state_variables; Type: TYPE; Schema: vrsn; Owner: -
 --
 
@@ -155,7 +170,6 @@ CREATE TYPE vrsn.tar_state_variables AS (
 
 
 --
--- TOC entry 928 (class 1255 OID 22693)
 -- Name: __entity_fullname_type__to_hstore(vrsn.entity_fullname_type); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -171,7 +185,6 @@ $$;
 
 
 --
--- TOC entry 930 (class 1255 OID 22697)
 -- Name: __entity_fullname_type__to_json(vrsn.entity_fullname_type); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -189,7 +202,6 @@ $$;
 
 
 --
--- TOC entry 942 (class 1255 OID 22701)
 -- Name: __entity_fullname_type__to_jsonb(vrsn.entity_fullname_type); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -207,7 +219,6 @@ $$;
 
 
 --
--- TOC entry 956 (class 1255 OID 22574)
 -- Name: __entity_fullname_type__to_string(vrsn.entity_fullname_type); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -223,7 +234,6 @@ $$;
 
 
 --
--- TOC entry 927 (class 1255 OID 22692)
 -- Name: __entity_fullname_type__from_hstore(extensions.hstore); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -250,7 +260,6 @@ $$;
 
 
 --
--- TOC entry 929 (class 1255 OID 22696)
 -- Name: __entity_fullname_type__from_json(json); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -277,7 +286,6 @@ $$;
 
 
 --
--- TOC entry 941 (class 1255 OID 22700)
 -- Name: __entity_fullname_type__from_jsonb(jsonb); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -304,7 +312,6 @@ $$;
 
 
 --
--- TOC entry 955 (class 1255 OID 22573)
 -- Name: __entity_fullname_type__from_string(text); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -339,7 +346,288 @@ $$;
 
 
 --
--- TOC entry 965 (class 1255 OID 21754)
+-- Name: __bitemporal_entity__build_ddl(jsonb); Type: FUNCTION; Schema: vrsn; Owner: -
+--
+
+CREATE FUNCTION vrsn.__bitemporal_entity__build_ddl(p_conf jsonb) RETURNS text
+    LANGUAGE plpgsql
+    AS $$
+declare
+/*
+	IN p_conf jsonb)
+    RETURNS text
+*/
+	v_sqlStr text;
+
+	v_conf	jsonb;
+
+	v_key		text;
+	v_jb		jsonb;
+	v_i			integer;
+
+	v_valid		boolean;
+	v_errors	text[];
+begin
+
+	--------------------------------------------------------------------
+    -- Fase 0: Verifico input
+    -- 
+	select is_valid, errors into v_valid, v_errors 
+	from common.jsonb_schema__validate (	p_conf
+			,	vrsn.parameters__get('bitemporal_entity','json_schema')
+		) 
+	;
+	
+	if not v_valid then
+		raise exception e'Json not valid:\n%', v_errors;
+    end if;
+
+
+	--------------------------------------------------------------------
+    --	Recupera parametro vuoto
+	v_conf=vrsn.parameters__get('bitemporal_entity','inner_conf');
+
+
+	--------------------------------------------------------------------
+    -- Fase 1: Applica p_conf a v_conf usando common.jsonb_recursive_left_merge.
+    -- Questo riempie la struttura di default di v_conf con i valori non-null forniti in p_conf.
+    v_conf := common.jsonb_recursive_left_merge(v_conf, p_conf, true);
+
+	--------------------------------------------------------------------
+    -- Completa i parametri
+	v_conf=vrsn.__bitemporal_entity__complete_conf_param(v_conf);
+
+	--------------------------------------------------------------------
+    -- Recupero la strutura dei campi
+
+	v_conf['structure']=vrsn.jsonb_table_structure__build(
+		(v_conf->'current_table'->>'table_name')
+	,	(v_conf->'current_table'->>'schema_name')
+	);
+
+	--------------------------------------------------------------------
+    -- Verifico se eredita dalla tabella bitemporale
+
+	SELECT count(*) into v_i	
+	from vrsn.__get_table_inheritance_ancestors(
+			(v_conf->'current_table'->>'schema_name')
+		,	(v_conf->'current_table'->>'table_name')
+		) 
+	WHERE	ancestor_schema='vrsn'
+		and ancestor_table='bitemporal_parent_table'
+	;
+
+	if v_i>0 then
+		v_conf['version']=to_jsonb(2::int);
+	else
+		v_conf['version']=to_jsonb(1::int);
+	end if;
+	
+
+	--------------------------------------------------------------------
+    -- Recupero la strutura
+
+	for v_key, v_jb in 
+		select key, value
+		from jsonb_each(v_conf->'structure') 
+	loop
+		
+		if (v_jb->>'pk')::boolean then
+			
+			v_conf['current_pk'][ (v_jb->>'pk_order')::int -1] = to_jsonb(v_key);
+		end if;
+
+		case v_jb->>'type'
+			when 'vrsn.bitemporal_record' then
+				v_conf['bt_info_name']= to_jsonb(v_key);
+				v_conf['history_pk'][0]=to_jsonb(v_key);
+				v_conf['bitemporal_fields']=v_conf->'bitemporal_fields' || to_jsonb(v_key);
+			when 'vrsn.bt_user_ts_range' then
+				if v_key='user_ts_range' then
+					v_conf['history_pk'][0]=to_jsonb(v_key);
+					v_conf['bitemporal_fields']=v_conf->'bitemporal_fields' || to_jsonb(v_key);
+				end if;
+			when 'vrsn.bt_db_ts_range' then
+				if v_key='db_ts_range' then
+					v_conf['history_pk'][1]=to_jsonb(v_key);
+					v_conf['bitemporal_fields']=v_conf->'bitemporal_fields' || to_jsonb(v_key);
+				end if;
+			when 'vrsn.bt_audit_record' then
+				if v_key='_audit_record' then					
+					v_conf['bitemporal_fields']=v_conf->'bitemporal_fields' || to_jsonb(v_key);
+				end if;
+			else
+				null;
+		end case;
+
+	end loop;
+
+	v_conf['history_pk']=v_conf['current_pk'] || v_conf['history_pk'];
+
+
+
+--raise notice e'\n%', jsonb_pretty(v_conf);
+
+	v_sqlStr= vrsn.__bitemporal_entity__get_ddl_complete(v_conf);
+
+
+	--------------------------------------------------------------------
+	--	Manage attribute handling
+	if v_conf->>'historice_entity' <> 'never' and (v_conf->>'enable_history_attributes')::boolean then
+	
+		v_sqlStr=v_sqlStr
+			|| vrsn.__bitemporal_entity__get_ddl_complete_attribute(v_conf);
+
+			
+	end if;
+	
+
+
+	return v_sqlStr;
+
+end;
+$$;
+
+
+--
+-- Name: __bitemporal_entity__complete_conf_param(jsonb); Type: FUNCTION; Schema: vrsn; Owner: -
+--
+
+CREATE FUNCTION vrsn.__bitemporal_entity__complete_conf_param(p_conf jsonb) RETURNS jsonb
+    LANGUAGE plpgsql
+    AS $$
+declare
+/*
+	IN p_conf jsonb
+    RETURNS jsonb
+*/
+
+begin
+--raise notice '1 %',jsonb_pretty(p_conf);
+	--------------------------------------------------------------------
+    -- Recupera lo schema se assente
+	p_conf['current_table']['schema_name'] = to_jsonb(coalesce ( 
+		(p_conf->'current_table'->>'schema_name')
+		,(p_conf->'entity'->>'schema_name')
+		,(p_conf->'current_view'->>'schema_name')
+	));
+
+	p_conf['current_view']['schema_name'] = to_jsonb(coalesce ( 
+		(p_conf->'current_view'->>'schema_name')
+		,(p_conf->'entity'->>'schema_name')
+		,(p_conf->'current_table'->>'schema_name')
+	));
+
+	p_conf['entity']['schema_name'] = to_jsonb(coalesce ( 
+		(p_conf->'entity'->>'schema_name')
+		,(p_conf->'current_table'->>'schema_name')
+	));
+
+	p_conf['history_table']['schema_name'] = to_jsonb(coalesce ( 
+		(p_conf->'history_table'->>'schema_name')
+		,(p_conf->'current_table'->>'schema_name')
+	));
+
+	p_conf['attribute_entity']['schema_name'] = to_jsonb(coalesce ( 
+		(p_conf->'attribute_entity'->>'schema_name')
+		,(p_conf->'current_table'->>'schema_name')
+	));
+
+	--------------------------------------------------------------------
+    -- Recupera il nome della tabella
+--raise notice '2%',jsonb_pretty(p_conf);
+	p_conf['current_table']['table_name'] = to_jsonb(coalesce ( 
+		(p_conf->'current_table'->>'table_name')
+	,	vrsn.__bitemporal_entity__get_current_table_name(
+			(p_conf->'current_view'->>'table_name')
+		)
+	,	(p_conf->'entity'->>'table_name') || '_current'
+	));
+
+	p_conf['entity']['table_name'] = to_jsonb(coalesce ( 
+		(p_conf->'entity'->>'table_name')
+	,	vrsn.__bitemporal_entity__get_entity_name (
+			(p_conf->'current_table'->>'table_name')
+		)
+	));
+
+	p_conf['current_view']['table_name'] = to_jsonb(coalesce ( 
+		(p_conf->'current_view'->>'table_name')
+	,	vrsn.__bitemporal_entity__get_view_name (
+			(p_conf->'current_table'->>'table_name')
+		)
+	));
+
+	p_conf['history_table']['table_name'] = to_jsonb(coalesce ( 
+		(p_conf->'history_table'->>'table_name')
+	,	vrsn.__bitemporal_entity__get_history_table_name(
+			(p_conf->'current_table'->>'table_name')
+		)
+	));
+
+	p_conf['attribute_entity']['table_name'] = to_jsonb(coalesce ( 
+		(p_conf->'attribute_entity'->>'table_name')
+	,	vrsn.__bitemporal_entity__get_attribute_entity_name(
+			(p_conf->'current_table'->>'table_name')
+		)
+	));
+
+--raise notice '3%',jsonb_pretty(p_conf);
+	--------------------------------------------------------------------
+    -- Controlli di coerenza
+
+	if ((p_conf->'current_view'->>'schema_name') is null
+		or (p_conf->'current_view'->>'table_name') is null)
+	then
+	
+        raise exception 'Missing information: You must provide at least "current_view.table_name" or "current_table.table_name".';
+		
+	elsif (p_conf->'current_view'->>'schema_name') = (p_conf->'current_table'->>'schema_name')
+		and (p_conf->'current_view'->>'table_name') = (p_conf->'current_table'->>'table_name')
+	then
+
+		raise exception e'View and Table must be distinguishable.\n%',jsonb_pretty(p_conf);
+	
+	end if;
+
+	if not (p_conf->>'enable_history_attributes')::boolean then
+		p_conf['attribute_entity']['schema_name']=to_jsonb(null::text);
+		p_conf['attribute_entity']['table_name']=to_jsonb(null::text);
+	end if;
+
+
+	return p_conf;
+
+end;
+$$;
+
+
+--
+-- Name: FUNCTION __bitemporal_entity__complete_conf_param(p_conf jsonb); Type: COMMENT; Schema: vrsn; Owner: -
+--
+
+COMMENT ON FUNCTION vrsn.__bitemporal_entity__complete_conf_param(p_conf jsonb) IS 'Complete missing value of conf parameter';
+
+
+--
+-- Name: __bitemporal_entity__get_attribute_entity_name(text); Type: FUNCTION; Schema: vrsn; Owner: -
+--
+
+CREATE FUNCTION vrsn.__bitemporal_entity__get_attribute_entity_name(object_name text) RETURNS text
+    LANGUAGE sql IMMUTABLE PARALLEL SAFE
+    BEGIN ATOMIC
+ SELECT regexp_replace(object_name, '(\_current|\_history|\_view|\_entity)?$'::text, '_attribute'::text) AS entity_name;
+END;
+
+
+--
+-- Name: FUNCTION __bitemporal_entity__get_attribute_entity_name(object_name text); Type: COMMENT; Schema: vrsn; Owner: -
+--
+
+COMMENT ON FUNCTION vrsn.__bitemporal_entity__get_attribute_entity_name(object_name text) IS 'return name for the attribute entity starting from a bitemporal table or view';
+
+
+--
 -- Name: __bitemporal_entity__get_attribute_table_name(text); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -351,8 +639,6 @@ END;
 
 
 --
--- TOC entry 4856 (class 0 OID 0)
--- Dependencies: 965
 -- Name: FUNCTION __bitemporal_entity__get_attribute_table_name(table_name text); Type: COMMENT; Schema: vrsn; Owner: -
 --
 
@@ -360,47 +646,103 @@ COMMENT ON FUNCTION vrsn.__bitemporal_entity__get_attribute_table_name(table_nam
 
 
 --
--- TOC entry 917 (class 1255 OID 21755)
--- Name: __bitemporal_entity__get_ddl_attribute_table(text, text, text); Type: FUNCTION; Schema: vrsn; Owner: -
+-- Name: __bitemporal_entity__get_current_table_name(text); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
-CREATE FUNCTION vrsn.__bitemporal_entity__get_ddl_attribute_table(schema_name text, table_name text, attribute_table_name text) RETURNS text
+CREATE FUNCTION vrsn.__bitemporal_entity__get_current_table_name(object_name text) RETURNS text
+    LANGUAGE sql IMMUTABLE PARALLEL SAFE
+    BEGIN ATOMIC
+ SELECT regexp_replace(object_name, '(\_current|\_history|\_view|\_entity)?$'::text, '_current'::text) AS entity_name;
+END;
+
+
+--
+-- Name: FUNCTION __bitemporal_entity__get_current_table_name(object_name text); Type: COMMENT; Schema: vrsn; Owner: -
+--
+
+COMMENT ON FUNCTION vrsn.__bitemporal_entity__get_current_table_name(object_name text) IS 'return name for the current table starting from a bitemporal table or view';
+
+
+--
+-- Name: __bitemporal_entity__get_ddl_attribute_table(jsonb); Type: FUNCTION; Schema: vrsn; Owner: -
+--
+
+CREATE FUNCTION vrsn.__bitemporal_entity__get_ddl_attribute_table(p_conf jsonb) RETURNS text
     LANGUAGE plpgsql
     AS $_$
 DECLARE
-    p_schema_name alias for schema_name;
-    p_table_name alias for table_name;
-	p_attribute_table_name alias for attribute_table_name;
+/*
+	IN p_conf jsonb)
+    RETURNS text
+*/
 
-    v_pk_cols     TEXT;
-	v_pk_fields		text;
-    v_ddl         TEXT := '';
+    v_pk_fields    			text;
+	v_fields_definition		text;
+    v_ddl         			text;
+
+	v_sql_v1	constant	text=$$
+		create table if not exists %1$I.%2$I (
+            ::bt_info::        vrsn.bitemporal_record NOT NULL
+         ,	%3$s
+            constraint %2$I_pk primary key(%4$s)
+        );
+	$$;
+	v_sql_v2	constant	text=$$
+		create table if not exists %1$I.%2$I (            
+            %3$s
+            constraint %2$I_pk primary key(%4$s)
+        )	INHERITS (vrsn.bitemporal_parent_table) ;
+	$$;
+
 
 BEGIN
+	---------------------------------------------------------------------
+	--	compute fields definiton
+	--	and pk composition
+	with fields_list as (
+		select field_name, pk_order, table_order, complete_definition
+		from vrsn.table__get_fields_details( 
+				(p_conf->'parent_table'->>'schema_name')
+			,	(p_conf->'parent_table'->>'table_name')
+		)
+		where is_pk
+		union all
+		select field_name, pk_order+100, table_order+100, complete_definition
+		from vrsn.table__get_fields_details('vrsn'
+				, 'bitemporal_parent_attribute_table')
+	), pk_fields as (
+		select string_agg( field_name 
+					, ', ' order by pk_order
+				) as pk_text		
+		from fields_list
+		where pk_order is not null
+	), fields_def as  (
+		select string_agg(	complete_definition	
+					, e'\n\t\t,\t'	order by table_order
+				) as fields_definition		
+		from fields_list
+	)
+	select a.pk_text, b.fields_definition
+	INTO v_pk_fields, v_fields_definition
+	from pk_fields a, fields_def b;
 
-	SELECT	string_agg(a.attname, ', ')
-		,	string_agg(format('%I %s', a.attname, pg_catalog.format_type(a.atttypid, a.atttypmod)), ', ')
-      INTO v_pk_fields, v_pk_cols
-      FROM pg_index i
-      JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
-     WHERE i.indrelid = format('%I.%I', p_schema_name, p_table_name)::regclass
-       AND i.indisprimary;
-
-    v_ddl :=format($$CREATE TABLE IF NOT EXISTS %4$s.%1$s (
-            bt_info        vrsn.bitemporal_record NOT NULL,
-            %2$s,
-            attribute_id   INTEGER NOT NULL,
-            idx            TEXT    NOT NULL DEFAULT '0',
-			attribute_Value jsonb,
-            constraint %1$s_pk primary key(%3$s, attribute_id, idx)
-        );
-        $$
-		,	quote_ident(p_attribute_table_name)
-		,	v_pk_cols
+raise notice '%', v_fields_definition;
+	---------------------------------------------------------------------
+	--	Determine the type of table creazione
+	if (p_conf->>'version')::integer= 2 then
+		v_ddl= v_sql_v2;
+	else 
+		v_ddl=replace(v_sql_v1, '::bt_info::', (p_conf->>'bt_info_name') );
+	end if;
+	
+	---------------------------------------------------------------------
+	--	substitute parameters
+    v_ddl =e'\n\n'||format(v_ddl
+		,	(p_conf->'current_table'->>'schema_name')
+		,	(p_conf->'current_table'->>'table_name')
+		,	v_fields_definition
 		,	v_pk_fields
-		,	quote_ident(p_schema_name)		
     );
-
 
     RETURN v_ddl;
 END;
@@ -408,138 +750,293 @@ $_$;
 
 
 --
--- TOC entry 977 (class 1255 OID 21662)
--- Name: __bitemporal_entity__get_ddl_history_table(text, text, text); Type: FUNCTION; Schema: vrsn; Owner: -
+-- Name: __bitemporal_entity__get_ddl_complete(jsonb); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
-CREATE FUNCTION vrsn.__bitemporal_entity__get_ddl_history_table(table_schema text, table_name text, full_history_table_name text DEFAULT NULL::text) RETURNS text
+CREATE FUNCTION vrsn.__bitemporal_entity__get_ddl_complete(p_conf jsonb) RETURNS text
     LANGUAGE plpgsql
     AS $_$
 declare
-/*
-	IN table_schema text
-	, IN table_name text
-	, IN full_history_table_name text DEFAULT null
-*/
- 	_table_schema alias for table_schema;
-	_table_name alias for table_name;
-	_full_current_table_name text = _table_schema || '.' ||_table_name;
 	
-	_history_table_name text;
-	_history_table_schema text;
-	
-	_pkey_name text;
-	_pkey_def text;
+	v_sqlStr text;
 
-	_ret text=$retValue$
-		CREATE TABLE if not exists %1$I.%2$I (
-    		CONSTRAINT %3$s %4$s
-		) INHERITS (%5$I.%6$I);
-		$retValue$;
-	
-	_array	text[];
-	_i		integer;
+	t_username	 text;
+
 begin
-	-- se il nome non è passato
-	if full_history_table_name is null then	
-		
-		_history_table_schema=_table_schema;
-		
-		-- cerco il suffiso _current per rimuoverlo
-		_i= strpos ( _table_name, '_current' );
-		
-		if _i >0 then
-			_history_table_name = substr ( _table_name, 1, _i -1  );
-		else 
-			_history_table_name=_table_name;
-		end if;
-		
-		_history_table_name=_history_table_name ||'_history';
-	else
-		_array=string_to_array(full_history_table_name,'.');
-		
-		
-		_i=array_length(_array,1);
-		
-		if _i= 1 then
-			_history_table_schema=_table_schema;
-			_history_table_name= full_history_table_name;
-		elseif _i=2 then
-			_history_table_schema=_array[1];
-			_history_table_name=_array[2];
-		else
-			raise exception 'full_history_table_name must be in the format [_SCHEMA_NAME_.]_TABLE_NAME_, given: <%>', full_history_table_name;
-		end if;
-	end if;
-	
-	
-	-- ricompatto il nome
-	--full_history_table_name=format('%I.%I', _history_table_schema, _history_table_name);
-	
-	-- recupero primary key e definizione
-	SELECT conname, pg_get_constraintdef(oid) as def_text into _pkey_name,_pkey_def
-	FROM pg_constraint
-	WHERE contype = 'p' -- p = primary key constraint
-    AND conrelid = to_regclass(_full_current_table_name); -- regclass will type the name of the object to its internal oid
-	
-	
-	_pkey_name = replace(_pkey_name, _table_name, _history_table_name);
-	_pkey_def = replace(_pkey_def, ')', ',bt_info)');
-	
-	_ret=format(_ret
-		,	_history_table_schema
-		,	_history_table_name
-		,	_pkey_name
-		,	_pkey_def
-		,	_table_schema
-		,	_table_name
+	--------------------------------------------------------------------
+	--	get/set user name text
+	t_username =coalesce(
+			vrsn.parameters__get_value('tar', 'params.t_username') #>>'{}'
+		,	'modify_user_id'
 	);
 
+
+	--------------------------------------------------------------------
+	--	get Idex for historical search
+	--	for current  table
+	v_sqlStr = e'\n\n' ||
+			vrsn.__bitemporal_entity__get_ddl_tsrange_idx(
+			p_conf, 'current_table'
+		);
+
+	--------------------------------------------------------------------
+	--	Get ddl for history table 
+	v_sqlStr = v_sqlStr || e'\n\n' || vrsn.__bitemporal_entity__get_ddl_history_table(p_conf);
+
+	--------------------------------------------------------------------
+	--	get Idex for historical search
+	--	for  history table
+	v_sqlStr  = v_sqlStr ||e'\n\n' ||
+			vrsn.__bitemporal_entity__get_ddl_tsrange_idx(
+			p_conf, 'history_table'
+		);
+
+	--------------------------------------------------------------------
+	--	Get ddl for history table 
+	v_sqlStr = v_sqlStr || e'\n\n' || vrsn.__bitemporal_entity__get_ddl_view(p_conf);
+
+--------------------------------------------------------------------
+	--	Insert def entity behaviour record
+
+	v_sqlStr = v_sqlStr || 
+		format($$
+
+		
+		INSERT INTO vrsn.def_entity_behavior(
+		 		entity_full_name.schema_name
+			,	entity_full_name.table_name
+		 	,	current_view_full_name.schema_name
+			,	current_view_full_name.table_name
+		 	,	current_table_full_name.schema_name
+			,	current_table_full_name.table_name
+		 	,	history_table_full_name.schema_name
+			,	history_table_full_name.table_name
+		 	,	attribute_entity_full_name.schema_name
+			,	attribute_entity_full_name.table_name
+
+		 	,	historice_entity, enable_history_attributes
+			,	main_fields_list, cached_fields_list
+			,	enable_attribute_to_fields_replacement, %16$I
+			,	action_hints)
+		VALUES(	%1$s, %2$s
+			,	%3$s, %4$s
+			,	%5$s, %6$s
+			,	%7$s, %8$s
+			,	%9$s, %10$s
+			,	%11$s, %12$s
+			,	%13$s, %14$s
+			,	%15$s, 'process:vrsn.register'
+			,	'{"onDupKey":"update"}'::jsonb);$$
+		,	quote_nullable((p_conf->'entity'->>'schema_name'))
+		,	quote_nullable((p_conf->'entity'->>'table_name'))
+		,	quote_nullable((p_conf->'current_view'->>'schema_name'))
+		,	quote_nullable((p_conf->'current_view'->>'table_name'))
+		,	quote_nullable((p_conf->'current_table'->>'schema_name'))
+		,	quote_nullable((p_conf->'current_table'->>'table_name'))
+		,	quote_nullable((p_conf->'history_table'->>'schema_name'))
+		,	quote_nullable((p_conf->'history_table'->>'table_name'))
+		,	quote_nullable((p_conf->'attribute_entity'->>'schema_name'))
+		,	quote_nullable((p_conf->'attribute_entity'->>'table_name'))
+		,	quote_nullable(p_conf->>'historice_entity')
+		,	p_conf->>'enable_history_attributes'
+		,	quote_nullable(p_conf->>'main_fields_list')
+		,	quote_nullable(p_conf->>'cached_fields_list')
+		,	p_conf->>'enable_attribute_to_fields_replacement'
+		,	t_username
+		);
 	
-	return _ret;
+	return v_sqlStr;
+
 end;
 $_$;
 
 
 --
--- TOC entry 919 (class 1255 OID 21675)
--- Name: __bitemporal_entity__get_ddl_tsrange_idx(text, text); Type: FUNCTION; Schema: vrsn; Owner: -
+-- Name: __bitemporal_entity__get_ddl_complete_attribute(jsonb); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
-CREATE FUNCTION vrsn.__bitemporal_entity__get_ddl_tsrange_idx(p_schema_name text, p_table_name text) RETURNS text
+CREATE FUNCTION vrsn.__bitemporal_entity__get_ddl_complete_attribute(p_conf jsonb) RETURNS text
+    LANGUAGE plpgsql
+    AS $_$
+declare
+	
+	v_sqlStr text;	
+	v_conf	jsonb;
+
+	v_key		text;
+	v_jb		jsonb;
+	v_i			integer;
+
+begin
+
+	--------------------------------------------------------------------
+    --	Recupera parametro vuoto
+	v_conf=vrsn.parameters__get('bitemporal_entity','inner_conf');
+
+	--------------------------------------------------------------------
+	-- Fase 1: Riempie v_conf con i parametri opportuni di p_cong
+	-- Questo riempie la struttura di default di v_conf con i valori non-null forniti in p_conf.
+	v_conf := common.jsonb_recursive_left_merge(v_conf
+		,	format(
+				$${
+					"entity": {
+						"table_name": "%2$I",
+						"schema_name": "%1$I"
+					},
+					"historice_entity": "always",
+					"enable_history_attributes": false,
+					"enable_attribute_to_fields_replacement": false,
+					"bt_info_name":"%3$I"
+				}$$
+			,	(p_conf->'attribute_entity'->>'schema_name')
+			,	(p_conf->'attribute_entity'->>'table_name')
+			,	(p_conf->>'bt_info_name')
+			
+			)::jsonb
+		,	true);
+
+	v_conf['version']=p_conf->'version';
+	v_conf['bitemporal_fields']=p_conf->'bitemporal_fields';
+--raise notice e'\n%', jsonb_pretty(v_conf);	
+	--------------------------------------------------------------------
+	-- Completa i parametri
+	v_conf=vrsn.__bitemporal_entity__complete_conf_param(v_conf);
+
+	--------------------------------------------------------------------
+	-- Add special reference to parent curren table
+	v_conf['parent_table']=p_conf->'current_table';
+	
+	--------------------------------------------------------------------
+    -- Recupero la strutura dalla tabella padre (bt_fields e pk)
+	-- più i campi specifici per gli attributi
+	-- 
+
+	with fields_list as (
+		select field_name,	data_type,	default_value,	is_nullable,
+		is_pk ,	pk_order ,	table_order, generation_type,
+		complete_definition
+		from vrsn.table__get_fields_details(
+				(p_conf->'current_table'->>'schema_name')
+			,	(p_conf->'current_table'->>'table_name')
+		)
+		where is_pk
+		or (v_conf['bitemporal_fields']) ? field_name
+		union all
+		select field_name,	data_type,	default_value,	is_nullable,
+		is_pk ,	pk_order +100,	table_order +100,	generation_type,
+		complete_definition
+		from vrsn.table__get_fields_details('vrsn'
+				, 'bitemporal_parent_attribute_table')
+	), pk_list as (
+		select jsonb_agg( field_name
+				 order by pk_order
+			) as pk_jb_list
+		from fields_list
+		where is_pk
+	), jts as (
+		select vrsn.table_field_details_to_jts_agg(t) as jb_struct
+		from fields_list as t
+	)
+	select  v_conf ||
+		jsonb_build_object(
+	    'current_pk', pk_list.pk_jb_list,
+	    'structure', jts.jb_struct)
+	into v_conf	
+	from pk_list, jts;
+	
+	-------------------------------------------------------------------------------
+	-- Sottrae current_pk da history_pk e accoda a v_conf->current_pk
+	v_conf['history_pk']=
+		(v_conf->'current_pk') || 
+		(
+			select coalesce(jsonb_agg(value), '[]'::jsonb)
+			from jsonb_array_elements_text(p_conf->'history_pk') as value
+			where not ((p_conf->'current_pk') ? value)
+		)
+	;
+
+	
+
+raise notice e'\n%', jsonb_pretty(v_conf);
+
+	v_sqlStr=vrsn.__bitemporal_entity__get_ddl_attribute_table(v_conf);
+
+	return v_sqlStr 
+		|| vrsn.__bitemporal_entity__get_ddl_complete(v_conf);
+end;
+$_$;
+
+
+--
+-- Name: __bitemporal_entity__get_ddl_history_table(jsonb); Type: FUNCTION; Schema: vrsn; Owner: -
+--
+
+CREATE FUNCTION vrsn.__bitemporal_entity__get_ddl_history_table(p_conf jsonb) RETURNS text
+    LANGUAGE sql IMMUTABLE PARALLEL SAFE
+    BEGIN ATOMIC
+ SELECT format('
+		CREATE TABLE if not exists %1$I.%2$I (
+    		CONSTRAINT %2$I_pk primary key (%5$s)
+		) INHERITS (%3$I.%4$I);'::text, ((p_conf -> 'history_table'::text) ->> 'schema_name'::text), ((p_conf -> 'history_table'::text) ->> 'table_name'::text), ((p_conf -> 'current_table'::text) ->> 'schema_name'::text), ((p_conf -> 'current_table'::text) ->> 'table_name'::text), common.jsonb_array_to_string((p_conf -> 'history_pk'::text))) AS ddl_text;
+END;
+
+
+--
+-- Name: __bitemporal_entity__get_ddl_tsrange_idx(jsonb, text); Type: FUNCTION; Schema: vrsn; Owner: -
+--
+
+CREATE FUNCTION vrsn.__bitemporal_entity__get_ddl_tsrange_idx(p_conf jsonb, p_entity text DEFAULT NULL::text) RETURNS text
     LANGUAGE plpgsql
     AS $$
 DECLARE
-    v_sql text := '';
-    v_column_name text;
+/*
+	IN	p_conf jsonb
+	IN	p_entity	text default null
+    RETURNS text
+*/
+
+    v_sql		text;	
 BEGIN
-    -- Cerca la colonna di tipo vrsn.bitemporal_record nella tabella e schema specificati
-    SELECT a.attname
-    INTO v_column_name
-    FROM pg_attribute a
-    JOIN pg_class c ON a.attrelid = c.oid
-    JOIN pg_namespace n ON c.relnamespace = n.oid
-    JOIN pg_type t ON a.atttypid = t.oid
-    WHERE c.relname = p_table_name
-      AND n.nspname = p_schema_name
-      AND t.typname = 'bitemporal_record'
-      AND a.attnum > 0 -- Esclude le colonne di sistema
-    LIMIT 1;
+	if p_entity is null then
+		if p_conf->>'working_on' is not null then
+			p_entity=p_conf->>'working_on';
+		else
+			raise exception 'No working entity';
+		end if;
+	end if;
+		
 
-    IF v_column_name IS NULL THEN
-        RAISE EXCEPTION 'La tabella ''%.%'' non contiene una colonna di tipo vrsn.bitemporal_record.', p_schema_name, p_table_name;
-    END IF;
+	case (p_conf->>'version')::int
+	when 1 then
+	    v_sql := e'\n-- indice gist composto (user_ts_range, db_ts_range)\n\n'
+			|| 'create index if not exists ' 
+			|| (p_conf->p_entity->>'table_name') 
+			|| '_user_db_tsr_ix on ' 
+			|| (p_conf->p_entity->>'schema_name') || '.' || (p_conf->p_entity->>'table_name') 
+			|| ' using gist (((' || (p_conf->>'bt_info_name') 
+			|| ').user_ts_range), ((' || (p_conf->>'bt_info_name') 
+			|| e').db_ts_range));\n\n-- indice gist solo su db_ts_range\n\n'	
+			|| 'create index if not exists ' || (p_conf->p_entity->>'table_name') 
+			|| '_db_tsr_ix on ' 
+			|| (p_conf->p_entity->>'schema_name') || '.' || (p_conf->p_entity->>'table_name') 
+			|| ' using gist (((' || (p_conf->>'bt_info_name') || e').db_ts_range));\n\n';
+	when 2 then
+		    v_sql := e'\n-- indice gist composto (user_ts_range, db_ts_range)\n\n'
+			|| 'create index if not exists ' 
+			|| (p_conf->p_entity->>'table_name') 
+			|| '_user_db_tsr_ix on ' 
+			|| (p_conf->p_entity->>'schema_name') || '.' || (p_conf->p_entity->>'table_name') 
+			|| e' using gist (user_ts_range, db_ts_range);\n\n'
+			|| e'-- indice gist solo su db_ts_range\n\n'	
+			|| 'create index if not exists ' || (p_conf->p_entity->>'table_name') 
+			|| '_db_tsr_ix on ' 
+			|| (p_conf->p_entity->>'schema_name') || '.' || (p_conf->p_entity->>'table_name') 
+			|| e' using gist (db_ts_range);\n\n';
 
-    -- Indice GIST composto (user_ts_range, db_ts_range)
-    v_sql := v_sql || 'CREATE INDEX IF NOT EXISTS ' || p_table_name || '_user_db_tsr_ix '
-                       || 'ON ' || p_schema_name || '.' || p_table_name || ' USING GIST '
-                       || '(((' || v_column_name || ').user_ts_range), ((' || v_column_name || ').db_ts_range));' || E'\n\n';
-
-    -- Indice GIST solo su db_ts_range
-    v_sql := v_sql || 'CREATE INDEX IF NOT EXISTS ' || p_table_name || '_db_tsr_ix '
-                       || 'ON ' || p_schema_name || '.' || p_table_name || ' USING GIST '
-                       || '(((' || v_column_name || ').db_ts_range));' || E'\n\n';
-
+	else
+		raise exception 'Version not recognized.';
+	end case;
+	
     RETURN v_sql;
 
 	-- Valutazione per le chiavi primarie
@@ -555,7 +1052,73 @@ $$;
 
 
 --
--- TOC entry 975 (class 1255 OID 21667)
+-- Name: __bitemporal_entity__get_ddl_view(jsonb); Type: FUNCTION; Schema: vrsn; Owner: -
+--
+
+CREATE FUNCTION vrsn.__bitemporal_entity__get_ddl_view(p_conf jsonb) RETURNS text
+    LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE
+    AS $_$
+declare
+/*
+	IN p_conf jsonb
+	RETURNS text
+*/
+	v_ret text='';
+	c_ddl_text	constant	text=$$
+--drop view %1$I.%2$I;
+
+create or replace view %1$I.%2$I as
+select s.%5$s
+	,	false::boolean AS is_closed
+	,	NULL::text AS modify_user_id
+	,	NULL::timestamp with time zone AS modify_ts
+	,	NULL::jsonb AS action_hints
+from only %3$I.%4$I as s;
+				
+create or replace trigger %6$I
+    instead of insert or delete or update 
+    on %1$I.%2$I
+    for each row
+    execute function vrsn.trigger_handler();$$;
+
+	
+begin	
+	----------------------------------------------------------------------
+	-- Genero l'elenco campi
+	select string_agg(
+		entry.key, 
+		e'\n\t,\ts.' 
+		order by coalesce((entry.value->>'field_order')::integer, 999999)
+	) into v_ret
+	from jsonb_each(p_conf->'structure') as entry(key, value)
+	where not (p_conf->'bitemporal_fields' ? entry.key);
+	
+
+	----------------------------------------------------------------------
+	-- Genero DDL
+	v_ret=format(c_ddl_text
+	,	(p_conf->'current_view'->>'schema_name')
+	,	(p_conf->'current_view'->>'table_name')
+	,	(p_conf->'current_table'->>'schema_name')
+	,	(p_conf->'current_table'->>'table_name')
+	,	v_ret
+	,	'trg_'|| (p_conf->'current_view'->>'table_name')
+	);
+	
+	
+	return v_ret;
+end;
+$_$;
+
+
+--
+-- Name: FUNCTION __bitemporal_entity__get_ddl_view(p_conf jsonb); Type: COMMENT; Schema: vrsn; Owner: -
+--
+
+COMMENT ON FUNCTION vrsn.__bitemporal_entity__get_ddl_view(p_conf jsonb) IS 'Get the standard defintion of view ready for manage bitemporal storage.';
+
+
+--
 -- Name: __bitemporal_entity__get_ddl_view(text, text, text); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -636,8 +1199,6 @@ $_$;
 
 
 --
--- TOC entry 4857 (class 0 OID 0)
--- Dependencies: 975
 -- Name: FUNCTION __bitemporal_entity__get_ddl_view(table_schema text, table_name text, full_view_name text); Type: COMMENT; Schema: vrsn; Owner: -
 --
 
@@ -645,11 +1206,64 @@ COMMENT ON FUNCTION vrsn.__bitemporal_entity__get_ddl_view(table_schema text, ta
 
 
 --
--- TOC entry 913 (class 1255 OID 21666)
+-- Name: __bitemporal_entity__get_entity_name(text); Type: FUNCTION; Schema: vrsn; Owner: -
+--
+
+CREATE FUNCTION vrsn.__bitemporal_entity__get_entity_name(object_name text) RETURNS text
+    LANGUAGE sql IMMUTABLE PARALLEL SAFE
+    BEGIN ATOMIC
+ SELECT regexp_replace(object_name, '(\_current|\_history|\_view|\_entity)?$'::text, ''::text) AS entity_name;
+END;
+
+
+--
+-- Name: FUNCTION __bitemporal_entity__get_entity_name(object_name text); Type: COMMENT; Schema: vrsn; Owner: -
+--
+
+COMMENT ON FUNCTION vrsn.__bitemporal_entity__get_entity_name(object_name text) IS 'return  name for the entity starting from a bitemporal table or view';
+
+
+--
+-- Name: __bitemporal_entity__get_history_table_name(text); Type: FUNCTION; Schema: vrsn; Owner: -
+--
+
+CREATE FUNCTION vrsn.__bitemporal_entity__get_history_table_name(object_name text) RETURNS text
+    LANGUAGE sql IMMUTABLE PARALLEL SAFE
+    BEGIN ATOMIC
+ SELECT regexp_replace(object_name, '(\_current|\_history|\_view|\_entity)?$'::text, '_history'::text) AS entity_name;
+END;
+
+
+--
+-- Name: FUNCTION __bitemporal_entity__get_history_table_name(object_name text); Type: COMMENT; Schema: vrsn; Owner: -
+--
+
+COMMENT ON FUNCTION vrsn.__bitemporal_entity__get_history_table_name(object_name text) IS 'return name for the history table starting from a bitemporal table or view';
+
+
+--
 -- Name: __bitemporal_entity__get_view_name(text); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
-CREATE FUNCTION vrsn.__bitemporal_entity__get_view_name(table_name text) RETURNS text
+CREATE FUNCTION vrsn.__bitemporal_entity__get_view_name(object_name text) RETURNS text
+    LANGUAGE sql IMMUTABLE PARALLEL SAFE
+    BEGIN ATOMIC
+ SELECT regexp_replace(object_name, '(\_current|\_history|\_view|\_entity)?$'::text, ''::text) AS entity_name;
+END;
+
+
+--
+-- Name: FUNCTION __bitemporal_entity__get_view_name(object_name text); Type: COMMENT; Schema: vrsn; Owner: -
+--
+
+COMMENT ON FUNCTION vrsn.__bitemporal_entity__get_view_name(object_name text) IS 'return name for the view starting from a bitemporal table or view';
+
+
+--
+-- Name: __bitemporal_entity__get_view_name_from_current_table(text); Type: FUNCTION; Schema: vrsn; Owner: -
+--
+
+CREATE FUNCTION vrsn.__bitemporal_entity__get_view_name_from_current_table(table_name text) RETURNS text
     LANGUAGE plpgsql IMMUTABLE
     AS $$
 declare
@@ -673,16 +1287,13 @@ $$;
 
 
 --
--- TOC entry 4858 (class 0 OID 0)
--- Dependencies: 913
--- Name: FUNCTION __bitemporal_entity__get_view_name(table_name text); Type: COMMENT; Schema: vrsn; Owner: -
+-- Name: FUNCTION __bitemporal_entity__get_view_name_from_current_table(table_name text); Type: COMMENT; Schema: vrsn; Owner: -
 --
 
-COMMENT ON FUNCTION vrsn.__bitemporal_entity__get_view_name(table_name text) IS 'return schema and name for the view representing the entity';
+COMMENT ON FUNCTION vrsn.__bitemporal_entity__get_view_name_from_current_table(table_name text) IS 'return name for the view';
 
 
 --
--- TOC entry 793 (class 1255 OID 22719)
 -- Name: __entity_fullname_type__array_agg_finalfn(vrsn.entity_fullname_type[]); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -694,7 +1305,6 @@ $$;
 
 
 --
--- TOC entry 792 (class 1255 OID 22718)
 -- Name: __entity_fullname_type__array_agg_transfn(vrsn.entity_fullname_type[], vrsn.entity_fullname_type); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -709,7 +1319,6 @@ $$;
 
 
 --
--- TOC entry 953 (class 1255 OID 22706)
 -- Name: __entity_fullname_type__cmp(vrsn.entity_fullname_type, vrsn.entity_fullname_type); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -727,7 +1336,6 @@ $$;
 
 
 --
--- TOC entry 943 (class 1255 OID 22704)
 -- Name: __entity_fullname_type__eq(vrsn.entity_fullname_type, vrsn.entity_fullname_type); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -740,7 +1348,6 @@ $$;
 
 
 --
--- TOC entry 785 (class 1255 OID 22710)
 -- Name: __entity_fullname_type__ge(vrsn.entity_fullname_type, vrsn.entity_fullname_type); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -752,7 +1359,6 @@ $$;
 
 
 --
--- TOC entry 777 (class 1255 OID 22709)
 -- Name: __entity_fullname_type__gt(vrsn.entity_fullname_type, vrsn.entity_fullname_type); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -764,7 +1370,6 @@ $$;
 
 
 --
--- TOC entry 791 (class 1255 OID 22717)
 -- Name: __entity_fullname_type__hash(vrsn.entity_fullname_type); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -776,7 +1381,6 @@ $$;
 
 
 --
--- TOC entry 776 (class 1255 OID 22708)
 -- Name: __entity_fullname_type__le(vrsn.entity_fullname_type, vrsn.entity_fullname_type); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -788,7 +1392,6 @@ $$;
 
 
 --
--- TOC entry 775 (class 1255 OID 22707)
 -- Name: __entity_fullname_type__lt(vrsn.entity_fullname_type, vrsn.entity_fullname_type); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -800,7 +1403,6 @@ $$;
 
 
 --
--- TOC entry 952 (class 1255 OID 22705)
 -- Name: __entity_fullname_type__ne(vrsn.entity_fullname_type, vrsn.entity_fullname_type); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -812,7 +1414,6 @@ $$;
 
 
 --
--- TOC entry 794 (class 1255 OID 22721)
 -- Name: __entity_fullname_type__string_agg_transfn(text, vrsn.entity_fullname_type, text); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -827,7 +1428,6 @@ $$;
 
 
 --
--- TOC entry 957 (class 1255 OID 22727)
 -- Name: __entity_fullname_type__test_extended(); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -891,7 +1491,6 @@ $$;
 
 
 --
--- TOC entry 970 (class 1255 OID 22976)
 -- Name: __entity_fullname_type__to_ident(vrsn.entity_fullname_type); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -903,7 +1502,48 @@ END;
 
 
 --
--- TOC entry 1000 (class 1255 OID 24718)
+-- Name: __get_table_inheritance_ancestors(text, text); Type: FUNCTION; Schema: vrsn; Owner: -
+--
+
+CREATE FUNCTION vrsn.__get_table_inheritance_ancestors(input_schema text, input_table text) RETURNS TABLE(ancestor_schema text, ancestor_table text, level integer)
+    LANGUAGE sql
+    AS $$
+	with recursive inheritance_ancestors as (
+		-- Caso base: la tabella di partenza
+		select 
+			n.nspname as current_schema,
+			c.relname as current_table,
+			c.oid as current_oid,
+			0 as level
+		from pg_class c
+		join pg_namespace n on n.oid = c.relnamespace
+		where n.nspname = input_schema
+			and c.relname = input_table
+		
+		union all
+		
+		-- Caso ricorsivo: trova le tabelle padre (inhparent)
+		select 
+			pn.nspname,
+			pc.relname,
+			pc.oid,
+			ia.level + 1
+		from inheritance_ancestors ia
+		join pg_inherits i on i.inhrelid = ia.current_oid
+		join pg_class pc on pc.oid = i.inhparent
+		join pg_namespace pn on pn.oid = pc.relnamespace
+	)
+	select 
+		ia.current_schema::text,
+		ia.current_table::text,
+		ia.level
+	from inheritance_ancestors ia
+--	where ia.level > 0
+	order by ia.level;
+$$;
+
+
+--
 -- Name: __lock__get_advsory(text, text, boolean, boolean); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -955,10 +1595,30 @@ begin
 end;$_$;
 
 
+--
+-- Name: __table_field_details__to_jsonb_transfn(jsonb, vrsn.table_field_details); Type: FUNCTION; Schema: vrsn; Owner: -
+--
+
+CREATE FUNCTION vrsn.__table_field_details__to_jsonb_transfn(state jsonb, field_data vrsn.table_field_details) RETURNS jsonb
+    LANGUAGE sql IMMUTABLE
+    AS $$
+    SELECT state || jsonb_build_object(
+        field_data.field_name,
+        json_build_object(
+            'type', field_data.data_type,
+            'generated', field_data.generation_type,
+            'pk', field_data.is_pk,
+            'pk_order', field_data.pk_order,
+            'default_value', field_data.default_value,
+            'field_order', field_data.table_order
+        )
+    );
+$$;
+
+
 SET default_table_access_method = heap;
 
 --
--- TOC entry 308 (class 1259 OID 22739)
 -- Name: trigger_activation_record_base; Type: TABLE; Schema: vrsn; Owner: -
 --
 
@@ -984,7 +1644,6 @@ WITH (autovacuum_enabled='true');
 
 
 --
--- TOC entry 999 (class 1255 OID 23146)
 -- Name: __tar_h__add_changelog(vrsn.trigger_activation_record_base); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -1049,7 +1708,6 @@ $$;
 
 
 --
--- TOC entry 926 (class 1255 OID 22432)
 -- Name: __tar_h__bind_action(text, extensions.hstore); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -1078,7 +1736,6 @@ end;$_$;
 
 
 --
--- TOC entry 310 (class 1259 OID 22990)
 -- Name: trigger_activation_record_stack; Type: TABLE; Schema: vrsn; Owner: -
 --
 
@@ -1096,7 +1753,6 @@ INHERITS (vrsn.trigger_activation_record_base);
 
 
 --
--- TOC entry 989 (class 1255 OID 23016)
 -- Name: __tar_h__build(vrsn.entity_fullname_type, boolean, anycompatiblearray); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -1175,19 +1831,18 @@ begin
 	tar.current_view_full_name=tar.entity_full_name;
 	tar.last_update_ts=clock_timestamp();
 
-/*
-	tar.mitigate_conflicts =true;
-	tar.ignore_unchanged_values =true;
-	tar.status='{}'::jsonb;
-	tar.historice_entity='always';	
-	tar.enable_history_attributes=false;
-	tar.enable_attribute_to_fields_replacement=false;
-*/
+
 	----------------------------------------------------------------------------
 	-- set standard parameter
 	tar = vrsn.__tar_h__config_func_build(tar);
-	--v_tar_s = tar ;	i=i+1;raise notice e'\nv_tar_s (%):\n<%>', i, v_tar_s;
-	
+--v_tar_s = tar ;	i=i+1;raise notice e'\nv_tar_s (%):\n<%>', i, v_tar_s;
+
+	----------------------------------------------------------------------------
+	--> Enrich with information stored in definition table 
+	tar= vrsn.__tar_h__get_def_behavior(tar);
+--v_tar_s = tar ;	i=i+1;raise notice e'\nv_tar_s (%):\n<%>', i, v_tar_s;
+
+
 	----------------------------------------------------------------------------
 	--> if there are paramenters
 	--> Define attibute or set form argv	
@@ -1304,12 +1959,6 @@ begin
 	tar.table_new_rec=tar.table_old_rec;
 
 --v_tar_s = tar ;	i=i+1;raise notice e'\nv_tar_s (%):\n<%>', i, v_tar_s;
-	----------------------------------------------------------------------------
-	--> Enrich with information stored in definition table 
-	tar= vrsn.__tar_h__get_def_behavior(tar);
---v_tar_s = tar ;	i=i+1;raise notice e'\nv_tar_s (%):\n<%>', i, v_tar_s;
-
-
 
 	----------------------------------------------------------------------------
 	--> Build standard actions
@@ -1383,7 +2032,6 @@ $_$;
 
 
 --
--- TOC entry 995 (class 1255 OID 25590)
 -- Name: __tar_h__build_actions(vrsn.trigger_activation_record_base); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -1705,7 +2353,6 @@ $_$;
 
 
 --
--- TOC entry 1003 (class 1255 OID 22913)
 -- Name: __tar_h__config_func_build(vrsn.trigger_activation_record_base); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -1780,7 +2427,6 @@ $$;
 
 
 --
--- TOC entry 1001 (class 1255 OID 26910)
 -- Name: __tar_h__config_func_init(); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -1792,7 +2438,6 @@ END;
 
 
 --
--- TOC entry 1008 (class 1255 OID 23164)
 -- Name: __tar_h__config_func_update(vrsn.trigger_activation_record_stack); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -1901,7 +2546,6 @@ $$;
 
 
 --
--- TOC entry 1022 (class 1255 OID 29413)
 -- Name: __tar_h__constant(); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -1941,7 +2585,6 @@ END;
 
 
 --
--- TOC entry 1004 (class 1255 OID 22914)
 -- Name: __tar_h__get_def_behavior(vrsn.trigger_activation_record_base); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -1970,36 +2613,46 @@ begin
 		FROM only vrsn.def_entity_behavior
 		where entity_full_name = tar.entity_full_name;
 
-
-		tar.attribute_entity_full_name = _rec.attribute_entity_full_name;
-		
-		case _rec.historice_entity 
-		when 'never' then
-			tar.func_state_var.func_state_var.versioning_active=false;
-			tar.func_state_var.enable_version_only_on_main_change=false;
-		when 'always' then
-			tar.func_state_var.enable_version_only_on_main_change=false;
-			tar.func_state_var.versioning_active=true;
-		when 'on_main_fields' then
-			tar.func_state_var.enable_version_only_on_main_change=true;
-			tar.func_state_var.versioning_active=true;
-		else
-			raise exception 'Value <%> not recognizable for historice_entity', _rec.historice_entity ;
-		end case;
-		
-		tar.func_state_var.enable_history_attributes = _rec.enable_history_attributes;
-		tar.func_state_var.mitigate_conflicts = _rec.mitigate_conflicts;
-		tar.func_state_var.ignore_unchanged_values = _rec.ignore_unchanged_values;
-		tar.func_state_var.enable_attribute_to_fields_replacement = _rec.enable_attribute_to_fields_replacement;
-
-		_main_fields_list = _rec.main_fields_list;
-		_cached_fields_list = _rec.cached_fields_list;
-
-
 		exception
 			when no_data_found	 then
 				null;
 	end;
+
+
+	-----------------------------------------------------------------------------
+	--> Set object full name
+
+	tar.current_view_full_name = _rec.current_view_full_name;
+	tar.current_table_full_name = _rec.current_table_full_name;
+	tar.history_table_full_name = _rec.history_table_full_name;
+	tar.attribute_entity_full_name = _rec.attribute_entity_full_name;
+
+
+	
+	
+	case _rec.historice_entity 
+	when 'never' then
+		tar.func_state_var.func_state_var.versioning_active=false;
+		tar.func_state_var.enable_version_only_on_main_change=false;
+	when 'always' then
+		tar.func_state_var.enable_version_only_on_main_change=false;
+		tar.func_state_var.versioning_active=true;
+	when 'on_main_fields' then
+		tar.func_state_var.enable_version_only_on_main_change=true;
+		tar.func_state_var.versioning_active=true;
+	else
+		raise exception 'Value <%> not recognizable for historice_entity', _rec.historice_entity ;
+	end case;
+	
+	tar.func_state_var.enable_history_attributes = _rec.enable_history_attributes;
+	tar.func_state_var.mitigate_conflicts = _rec.mitigate_conflicts;
+	tar.func_state_var.ignore_unchanged_values = _rec.ignore_unchanged_values;
+	tar.func_state_var.enable_attribute_to_fields_replacement = _rec.enable_attribute_to_fields_replacement;
+
+	_main_fields_list = _rec.main_fields_list;
+	_cached_fields_list = _rec.cached_fields_list;
+
+
 
 	-----------------------------------------------------------------------------
 	-- calcola l'array finale per 'main_fields_list' (unione)
@@ -2059,7 +2712,6 @@ $$;
 
 
 --
--- TOC entry 974 (class 1255 OID 23165)
 -- Name: __tar_h__handle_attribute_field(vrsn.trigger_activation_record_stack); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -2398,7 +3050,6 @@ $_$;
 
 
 --
--- TOC entry 996 (class 1255 OID 25594)
 -- Name: __tar_h__handle_trigger(vrsn.entity_fullname_type, text, record, record, anycompatiblearray); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -2927,7 +3578,6 @@ $_$;
 
 
 --
--- TOC entry 988 (class 1255 OID 23168)
 -- Name: __tar_h__prepare_record(vrsn.trigger_activation_record_stack); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -3252,7 +3902,6 @@ $_$;
 
 
 --
--- TOC entry 312 (class 1259 OID 23020)
 -- Name: trigger_activation_record_stack_trace_parent; Type: TABLE; Schema: vrsn; Owner: -
 --
 
@@ -3266,7 +3915,6 @@ INHERITS (vrsn.trigger_activation_record_stack);
 
 
 --
--- TOC entry 972 (class 1255 OID 23082)
 -- Name: __tar_h__trace(vrsn.trigger_activation_record_stack_trace_parent); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -3307,7 +3955,6 @@ $$;
 
 
 --
--- TOC entry 1021 (class 1255 OID 25596)
 -- Name: __tar_h__user_far_past_handling(vrsn.trigger_activation_record_stack); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -3450,7 +4097,6 @@ $$;
 
 
 --
--- TOC entry 990 (class 1255 OID 23171)
 -- Name: __tar_h__user_near_past_handling(vrsn.trigger_activation_record_stack); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -3487,7 +4133,180 @@ $$;
 
 
 --
--- TOC entry 1026 (class 1255 OID 29431)
+-- Name: _d_jsonb_table_structure__build(text, text); Type: FUNCTION; Schema: vrsn; Owner: -
+--
+
+CREATE FUNCTION vrsn._d_jsonb_table_structure__build(name_of_table text, name_of_schema text DEFAULT 'public'::text) RETURNS jsonb
+    LANGUAGE sql IMMUTABLE
+    BEGIN ATOMIC
+ WITH tbl AS (
+          SELECT _d_jsonb_table_structure__build.name_of_schema AS sn,
+             _d_jsonb_table_structure__build.name_of_table AS tn
+         ), clm AS (
+          SELECT cs.table_schema,
+             cs.table_name,
+             cs.column_name AS cn,
+                 CASE
+                     WHEN (cs.domain_name IS NOT NULL) THEN (((cs.domain_schema)::text || '.'::text) || (cs.domain_name)::text)
+                     WHEN ((cs.data_type)::text = 'ARRAY'::text) THEN ((((cs.udt_schema)::text || '.'::text) || "substring"((cs.udt_name)::text, 2)) || '[]'::text)
+                     WHEN ((cs.data_type)::text <> 'USER-DEFINED'::text) THEN (cs.data_type)::text
+                     ELSE (((cs.udt_schema)::text || '.'::text) || (cs.udt_name)::text)
+                 END AS ct,
+                 CASE
+                     WHEN (((cs.is_identity)::text = 'YES'::text) AND ((cs.identity_generation)::text = 'BY DEFAULT'::text)) THEN 'default'::text
+                     WHEN (((cs.is_identity)::text = 'YES'::text) AND ((cs.identity_generation)::text = 'ALWAYS'::text)) THEN 'identity'::text
+                     WHEN ((cs.is_generated)::text = 'ALWAYS'::text) THEN 'always'::text
+                     WHEN (((cs.is_nullable)::text = 'NO'::text) AND (cs.column_default IS NOT NULL)) THEN 'on_null'::text
+                     ELSE ''::text
+                 END AS cg,
+             cs.ordinal_position,
+             cs.column_default
+            FROM (tbl
+              JOIN information_schema.columns cs ON ((((cs.table_schema)::name = tbl.sn) AND ((cs.table_name)::name = tbl.tn))))
+           ORDER BY cs.ordinal_position
+         ), pk AS (
+          SELECT cu.column_name AS cn,
+             cu.ordinal_position
+            FROM ((tbl
+              JOIN information_schema.table_constraints tc ON ((((tc.table_schema)::name = tbl.sn) AND ((tc.table_name)::name = tbl.tn))))
+              JOIN information_schema.key_column_usage cu ON (((tc.constraint_name)::name = (cu.constraint_name)::name)))
+           WHERE ((tc.constraint_type)::text = 'PRIMARY KEY'::text)
+         ), j1 AS (
+          SELECT l.cn,
+             json_build_object('type', l.ct, 'generated', l.cg, 'pk',
+                 CASE
+                     WHEN (pk.cn IS NULL) THEN false
+                     ELSE true
+                 END, 'pk_order',
+                 CASE
+                     WHEN (pk.cn IS NULL) THEN NULL::integer
+                     ELSE (pk.ordinal_position)::integer
+                 END, 'default_value', l.column_default, 'field_order', l.ordinal_position) AS obj
+            FROM (clm l
+              LEFT JOIN pk ON (((l.cn)::name = (pk.cn)::name)))
+           ORDER BY l.ordinal_position
+         )
+  SELECT jsonb_object_agg(j1.cn, j1.obj) AS jsonb_object_agg
+    FROM j1;
+END;
+
+
+--
+-- Name: admin__bitemporal_entity_register(jsonb, boolean); Type: FUNCTION; Schema: vrsn; Owner: -
+--
+
+CREATE FUNCTION vrsn.admin__bitemporal_entity_register(p_conf jsonb, p_execute boolean DEFAULT false) RETURNS text
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+/*
+	IN p_conf jsonb,
+	IN p_execute boolena default false)
+	RETURNS text
+*/
+    v_result		text;
+	v_conf			jsonb;
+BEGIN
+
+	----------------------------------------------------------------------------------------
+	--	Normalizzo input
+	CASE jsonb_typeof(p_conf)
+    WHEN 'array' THEN
+		null;
+	WHEN 'object' THEN 
+		p_conf = jsonb_build_array(p_conf);
+	ELSE
+		raise exception 'Input does not seem to be an object or an array';
+	END case;
+
+
+
+	----------------------------------------------------------------------------------------
+	--	Itero sugli elementi
+	for v_conf in select jsonb_array_elements(p_conf)loop
+	
+	    v_result :=e'\n------------------------------------\n\n'
+			|| __bitemporal_entity__build_ddl(v_conf);
+			
+	end loop;
+
+	----------------------------------------------------------------------------------------
+	--	if not p_execute just return sql
+	if not p_execute then
+		RETURN v_result;	
+	end if;
+
+
+	----------------------------------------------------------------------------------------
+	--	Executing
+	execute v_result;
+	
+    RETURN e'-----Executed------\n\n\n' || v_result;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION admin__bitemporal_entity_register(p_conf jsonb, p_execute boolean); Type: COMMENT; Schema: vrsn; Owner: -
+--
+
+COMMENT ON FUNCTION vrsn.admin__bitemporal_entity_register(p_conf jsonb, p_execute boolean) IS 'You can pass an object in the format of admin__get_bitemporal_entity_conf_param
+or an jsonb array of the same element.
+
+With this method you can define many parameters for each entity';
+
+
+--
+-- Name: admin__bitemporal_entity_register(text, text, boolean); Type: FUNCTION; Schema: vrsn; Owner: -
+--
+
+CREATE FUNCTION vrsn.admin__bitemporal_entity_register(p_current_table_schema text, p_current_table_name text, p_execute boolean DEFAULT false) RETURNS text
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+/*
+	IN p_current_table_schema text,
+	IN p_current_table_name text,
+	IN p_execute boolena default false)
+	RETURNS text
+*/
+    v_result		text;
+	v_jb			jsonb='{   "current_table": {
+								    "table_name": "",
+								    "schema_name": ""
+							  }
+							}'::jsonb;
+BEGIN
+
+	v_jb['current_table']['schema_name']	=	to_jsonb(p_current_table_schema);
+	v_jb['current_table']['table_name']		=	to_jsonb(p_current_table_name);
+	
+
+		
+    -- Chiamiamo la funzione sottostante di vrsn, passando i parametri nominativamente.
+    v_result := __bitemporal_entity__build_ddl(jb);
+
+	if not p_execute then
+		RETURN v_result;	
+	end if;
+
+	execute v_result;
+	
+    RETURN e'-----Executed------\n\n\n' || v_result;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION admin__bitemporal_entity_register(p_current_table_schema text, p_current_table_name text, p_execute boolean); Type: COMMENT; Schema: vrsn; Owner: -
+--
+
+COMMENT ON FUNCTION vrsn.admin__bitemporal_entity_register(p_current_table_schema text, p_current_table_name text, p_execute boolean) IS 'Easiast way to register a bitemporal table.
+All the parameters as streatda in standard way.
+';
+
+
+--
 -- Name: admin__entity_change_behavior(text, text, text, vrsn.historice_entity_behaviour, boolean, text, text, boolean, boolean, boolean); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -3514,33 +4333,30 @@ $$;
 
 
 --
--- TOC entry 1027 (class 1255 OID 29432)
--- Name: admin__entity_register(text, text, vrsn.historice_entity_behaviour, boolean, text, text, boolean); Type: FUNCTION; Schema: vrsn; Owner: -
+-- Name: admin__get_bitemporal_entity_conf_param(); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
-CREATE FUNCTION vrsn.admin__entity_register(table_schema text, table_name text, historice_entity vrsn.historice_entity_behaviour DEFAULT 'always'::vrsn.historice_entity_behaviour, enable_history_attributes boolean DEFAULT NULL::boolean, main_fields_list text DEFAULT NULL::text, cached_fields_list text DEFAULT NULL::text, print_only boolean DEFAULT false) RETURNS text
-    LANGUAGE plpgsql
+CREATE FUNCTION vrsn.admin__get_bitemporal_entity_conf_param() RETURNS TABLE(input_example jsonb, json_schema jsonb)
+    LANGUAGE sql
     AS $$
-DECLARE
-    v_result text;
-BEGIN
-    -- Chiamiamo la funzione sottostante di vrsn, passando i parametri nominativamente.
-    v_result := vrsn.bitemporal_entity__register(
-        table_schema := table_schema,
-        table_name := table_name,
-        historice_entity := historice_entity,
-        enable_history_attributes := enable_history_attributes,
-        main_fields_list := main_fields_list,
-        cached_fields_list := cached_fields_list,
-        print_only := print_only
-    );
-    RETURN v_result;
-END;
+select
+	vrsn.parameters__get('bitemporal_entity','external_input') as input_example
+,	vrsn.parameters__get('bitemporal_entity','json_schema') as json_schema
+;
 $$;
 
 
 --
--- TOC entry 1002 (class 1255 OID 29433)
+-- Name: FUNCTION admin__get_bitemporal_entity_conf_param(); Type: COMMENT; Schema: vrsn; Owner: -
+--
+
+COMMENT ON FUNCTION vrsn.admin__get_bitemporal_entity_conf_param() IS 'Retrieve a  TABLE(input_example jsonb, json_schema jsonb)
+With an input example and relative json_schema
+
+Plese, remove all null parameters';
+
+
+--
 -- Name: admin__init(boolean); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -3577,17 +4393,21 @@ CREATE FUNCTION vrsn.admin__init(only_get_query boolean) RETURNS text
 
 
 INSERT INTO vrsn.def_entity_behavior_current VALUES
-		('("[""2025-07-10 23:33:05.253624+02"",infinity)","[""2025-07-10 23:33:05.253624+02"",infinity)","{""process"": ""vrsn.register""}")', '(vrsn,parameter)', NULL, 'always', false, NULL, NULL, true, true, false, NULL),
-	('("[""2025-07-10 23:34:45.314309+02"",infinity)","[""2025-07-10 23:34:45.314309+02"",infinity)","{""process"": ""vrsn.register""}")', '(vrsn,attribute_lineage)', NULL, 'always', false, NULL, NULL, true, true, false, NULL),	
-	('("[""2025-07-30 22:44:37.959563+02"",infinity)","[""2025-07-30 22:44:37.959563+02"",infinity)","{""process"": ""vrsn.register""}")', '(vrsn,def_entity_behavior)', NULL, 'always', false, NULL, NULL, true, true, false, NULL),
-	('("[""2025-07-30 22:50:11.756812+02"",infinity)","[""2025-07-30 22:50:11.756812+02"",infinity)","{""process"": ""vrsn.register""}")', '(vrsn,attribute_mapping_to_table)', NULL, 'always', false, NULL, NULL, true, true, false, NULL);
+	('("[""2025-08-27 01:47:04.813292+02"",infinity)","[""2025-08-27 01:47:04.813292+02"",infinity)","{""process"": ""vrsn.register""}")', '(vrsn,def_entity_behavior)', '(vrsn,def_entity_behavior)', '(vrsn,def_entity_behavior_current)', '(vrsn,def_entity_behavior_history)', '(,)', 'always', false, NULL, NULL, true, true, false, NULL),
+	('("[""2025-08-27 10:27:05.83773+02"",infinity)","[""2025-08-27 10:27:05.83773+02"",infinity)","{""process"": ""vrsn.register""}")', '(vrsn,parameter)', '(vrsn,parameter)', '(vrsn,parameter_current)', '(vrsn,parameter_history)', '(,)', 'always', false, NULL, NULL, true, true, false, NULL),
+	('("[""2025-08-27 10:28:01.115262+02"",infinity)","[""2025-08-27 10:28:01.115262+02"",infinity)","{""process"": ""vrsn.register""}")', '(vrsn,attribute_mapping_to_entity)', '(vrsn,attribute_mapping_to_entity)', '(vrsn,attribute_mapping_to_entity_current)', '(vrsn,attribute_mapping_to_entity_history)', '(,)', 'always', false, NULL, NULL, true, true, false, NULL),
+	('("[""2025-08-27 10:28:30.986994+02"",infinity)","[""2025-08-27 10:28:30.986994+02"",infinity)","{""process"": ""vrsn.register""}")', '(vrsn,attribute_lineage)', '(vrsn,attribute_lineage)', '(vrsn,attribute_lineage_current)', '(vrsn,attribute_lineage_history)', '(,)', 'always', false, NULL, NULL, true, true, false, NULL);
+
 
 
 INSERT INTO vrsn.parameter_current VALUES
 	('("[""2025-07-10 23:39:40.079853+02"",infinity)","[""2025-07-10 23:39:40.079853+02"",infinity)","{""process"": ""vrsn.init""}")', 'trace', 'list', 'last stack trace truncate
 new date for truncate', '{"last_ts": null, "next_ts": null, "last_partition": null}'),
 	('("[""2025-07-10 23:39:40.079853+02"",infinity)","[""2025-07-10 23:39:40.079853+02"",infinity)","{""process"": ""vrsn.init""}")', 'field_type', 'config', 'behavior of specific fields', '{"vrsn.cached_attribute": {"null_on_history": true}}'),
-	('("[""2025-07-10 23:39:40.079853+02"",infinity)","[""2025-07-10 23:39:40.079853+02"",infinity)","{""process"": ""vrsn.init""}")', 'tar', 'config', 'constant, parameters, state_var defaults', '{"params": {"t_dbTs": "dbTs", "t_closed": "is_closed", "username": null, "extraInfo": null, "t_onDupKey": "onDupKey", "t_onUpdate": "onUpdate", "t_username": "modify_user_id", "t_modify_ts": "modify_ts", "t_versioning": "versioning", "t_action_hints": "action_hints", "tar_week_to_live": 10, "versioning_active": "cipolla", "t_onUnchangedValue": "onUnchangedValue", "t_versioning_c_off": "off", "t_onDupKey_c_update": "update", "hours_for_nearPastTime": 3, "t_onDupKey_c_doNothing": "do nothing", "seconds_for_nearRealTime": 5, "t_onUpdate_c_ignoreNulls": "ignore nulls", "t_onUnchangedValue_c_touch": "touch", "t_onUnchangedValue_c_update": "update", "t_onUnchangedValue_c_discard": "discard", "t_allowFullDeactivationByPastCloseTs": "allowFullDeactivationByPastCloseTs"}, "state_variables": {"is_ready": true, "tar_changelog": true, "versioning_active": true, "mitigate_conflicts": true, "ignore_unchanged_values": true}}');
+	('("[""2025-07-10 23:39:40.079853+02"",infinity)","[""2025-07-10 23:39:40.079853+02"",infinity)","{""process"": ""vrsn.init""}")', 'tar', 'config', 'constant, parameters, state_var defaults', '{"params": {"t_dbTs": "dbTs", "t_closed": "is_closed", "username": null, "extraInfo": null, "t_onDupKey": "onDupKey", "t_onUpdate": "onUpdate", "t_username": "modify_user_id", "t_modify_ts": "modify_ts", "t_versioning": "versioning", "t_action_hints": "action_hints", "tar_week_to_live": 10, "versioning_active": "cipolla", "t_onUnchangedValue": "onUnchangedValue", "t_versioning_c_off": "off", "t_onDupKey_c_update": "update", "hours_for_nearPastTime": 3, "t_onDupKey_c_doNothing": "do nothing", "seconds_for_nearRealTime": 5, "t_onUpdate_c_ignoreNulls": "ignore nulls", "t_onUnchangedValue_c_touch": "touch", "t_onUnchangedValue_c_update": "update", "t_onUnchangedValue_c_discard": "discard", "t_allowFullDeactivationByPastCloseTs": "allowFullDeactivationByPastCloseTs"}, "state_variables": {"is_ready": true, "tar_changelog": true, "versioning_active": true, "mitigate_conflicts": true, "ignore_unchanged_values": true}}'),
+	('("[""2025-07-10 23:39:40.079853+02"",infinity)","[""2025-07-10 23:39:40.079853+02"",infinity)","{""process"": ""vrsn.init""}")', 'bitemporal_entity', 'inner_conf', 'Configuration param managed internally', '{"entity": {"table_name": null, "schema_name": null}, "version": null, "structure": {}, "current_pk": [], "history_pk": [], "bt_info_name": null, "current_view": {"table_name": null, "schema_name": null}, "current_table": {"table_name": null, "schema_name": null}, "history_table": {"table_name": null, "schema_name": null}, "attribute_entity": {"table_name": null, "schema_name": null}, "historice_entity": null, "main_fields_list": null, "bitemporal_fields": [], "cached_fields_list": null, "mitigate_conflicts": true, "ignore_unchanged_values": true, "enable_history_attributes": false, "enable_attribute_to_fields_replacement": false}'),
+	('("[""2025-07-10 23:39:40.079853+02"",infinity)","[""2025-07-10 23:39:40.079853+02"",infinity)","{""process"": ""vrsn.init""}")', 'bitemporal_entity', 'external_input', 'Configuration param used to call function', '{"entity": {"table_name": null, "schema_name": null}, "current_view": {"table_name": null, "schema_name": null}, "current_table": {"table_name": null, "schema_name": null}, "history_table": {"table_name": null, "schema_name": null}, "attribute_entity": {"table_name": null, "schema_name": null}, "historice_entity": "always", "main_fields_list": null, "cached_fields_list": null, "mitigate_conflicts": true, "ignore_unchanged_values": true, "enable_history_attributes": false, "enable_attribute_to_fields_replacement": false}'),
+	('("[""2025-07-10 23:39:40.079853+02"",infinity)","[""2025-07-10 23:39:40.079853+02"",infinity)","{""process"": ""vrsn.init""}")', 'bitemporal_entity', 'json_schema', 'jsonSchema for input', '{"type": "object", "title": "Entity Configuration Schema", "$schema": "http://json-schema.org/draft-07/schema#", "required": ["current_table"], "properties": {"entity": {"$ref": "#/definitions/table_reference", "description": "Definizione dell''entità principale"}, "current_view": {"$ref": "#/definitions/table_reference", "description": "Vista corrente dell''entità"}, "current_table": {"$ref": "#/definitions/table_reference", "description": "Tabella corrente dell''entità"}, "history_table": {"$ref": "#/definitions/table_reference", "description": "Tabella storica dell''entità"}, "attribute_entity": {"$ref": "#/definitions/table_reference", "description": "Entità degli attributi"}, "historice_entity": {"enum": ["on_main_fields", "never", "always"], "type": "string", "description": "Strategia per la gestione della storicizzazione dell''entità"}, "main_fields_list": {"type": ["string", "null"], "pattern": "^([a-zA-Z_][a-zA-Z0-9_]*(\\s*,\\s*[a-zA-Z_][a-zA-Z0-9_]*)*)?$", "description": "Lista dei campi principali separati da virgole, oppure null"}, "cached_fields_list": {"type": ["string", "null"], "pattern": "^([a-zA-Z_][a-zA-Z0-9_]*(\\s*,\\s*[a-zA-Z_][a-zA-Z0-9_]*)*)?$", "description": "Lista dei campi in cache separati da virgole, oppure null"}, "mitigate_conflicts": {"type": "boolean", "description": "Flag per attivare la mitigazione dei conflitti"}, "ignore_unchanged_values": {"type": "boolean", "description": "Flag per ignorare i valori non modificati"}, "enable_history_attributes": {"type": "boolean", "description": "Flag per abilitare gli attributi storici"}, "enable_attribute_to_fields_replacement": {"type": "boolean", "description": "Flag per abilitare la sostituzione degli attributi con i campi"}}, "definitions": {"table_reference": {"type": "object", "required": ["table_name", "schema_name"], "properties": {"table_name": {"type": ["string", "null"], "description": "Nome della tabella"}, "schema_name": {"type": ["string", "null"], "description": "Nome dello schema"}}, "description": "Riferimento a una tabella con schema e nome", "additionalProperties": false}}, "description": "Schema per la configurazione di entità con supporto per tabelle storiche e attributi", "additionalProperties": false}');
 
 $$;
 begin
@@ -3604,7 +4424,14 @@ end;$_$;
 
 
 --
--- TOC entry 1024 (class 1255 OID 29429)
+-- Name: FUNCTION admin__init(only_get_query boolean); Type: COMMENT; Schema: vrsn; Owner: -
+--
+
+COMMENT ON FUNCTION vrsn.admin__init(only_get_query boolean) IS 'Destructive method.
+Use only when you want to regenerate a clean configuration.';
+
+
+--
 -- Name: admin__insert_global_attribute(text, text, jsonb); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -3635,7 +4462,7 @@ begin
 
 	-- recupera colonna modify_user_id
 	select coalesce(
-		vrsn.parameters__get_value('tar', 'params.t_username')::text,
+		vrsn.parameters__get_value('tar', 'params.t_username') #>>'{}',
 		'modify_user_id'
 	)
 	into t_username;
@@ -3658,7 +4485,6 @@ $_$;
 
 
 --
--- TOC entry 1025 (class 1255 OID 29430)
 -- Name: admin__insert_local_attribute(text, text, text, text, jsonb); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -3703,7 +4529,7 @@ begin
 
 	-- recupera colonna modify_user_id
 	select coalesce(
-		vrsn.parameters__get_value('tar', 'params.t_username')::text,
+		vrsn.parameters__get_value('tar', 'params.t_username') #>>'{}',
 		'modify_user_id'
 	)
 	into t_username;
@@ -3726,7 +4552,20 @@ $_$;
 
 
 --
--- TOC entry 1023 (class 1255 OID 29428)
+-- Name: admin__readme(); Type: FUNCTION; Schema: vrsn; Owner: -
+--
+
+CREATE FUNCTION vrsn.admin__readme() RETURNS text
+    LANGUAGE sql IMMUTABLE PARALLEL SAFE
+    BEGIN ATOMIC
+ SELECT 'Package wrapper for user.
+ Every function thought to be used for a user is wrapped in this package.
+ If you wish to add functionallity... probabily you''re wrong....
+'::text AS text;
+END;
+
+
+--
 -- Name: admin__reserve_attribute(bigint, text, text, text); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -3793,7 +4632,7 @@ begin
 
     -- 4) recupera il nome della colonna utente da parametri (default: modify_user_id)
     select coalesce(
-        vrsn.parameters__get_value('tar', 'params.t_username')::text,
+        vrsn.parameters__get_value('tar', 'params.t_username') #>>'{}',
         'modify_user_id'
     )
     into t_username;
@@ -3821,7 +4660,6 @@ end;$_$;
 
 
 --
--- TOC entry 827 (class 1255 OID 19931)
 -- Name: audit_record__build(); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -3833,7 +4671,6 @@ END;
 
 
 --
--- TOC entry 829 (class 1255 OID 19932)
 -- Name: audit_record__close(text, jsonb, timestamp with time zone); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -3856,7 +4693,6 @@ $$;
 
 
 --
--- TOC entry 901 (class 1255 OID 20844)
 -- Name: audit_record__deactivate(text, jsonb, timestamp with time zone); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -3876,8 +4712,6 @@ $$;
 
 
 --
--- TOC entry 4859 (class 0 OID 0)
--- Dependencies: 901
 -- Name: FUNCTION audit_record__deactivate(user_id text, audit_record jsonb, when_appens timestamp with time zone); Type: COMMENT; Schema: vrsn; Owner: -
 --
 
@@ -3886,7 +4720,6 @@ This record will be outside of timeline from user perspective';
 
 
 --
--- TOC entry 909 (class 1255 OID 21065)
 -- Name: audit_record__get_deactiovation_ts(jsonb); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -3898,7 +4731,6 @@ END;
 
 
 --
--- TOC entry 903 (class 1255 OID 20845)
 -- Name: audit_record__is_active(jsonb); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -3910,7 +4742,6 @@ END;
 
 
 --
--- TOC entry 828 (class 1255 OID 19934)
 -- Name: audit_record__readme(); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -3923,7 +4754,6 @@ END;
 
 
 --
--- TOC entry 904 (class 1255 OID 20846)
 -- Name: audit_record__reopen(text, jsonb, timestamp with time zone); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -3950,7 +4780,6 @@ $$;
 
 
 --
--- TOC entry 825 (class 1255 OID 19935)
 -- Name: audit_record__set(anycompatible, text, jsonb); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -3991,7 +4820,6 @@ $$;
 
 
 --
--- TOC entry 910 (class 1255 OID 19936)
 -- Name: audit_record__validate(jsonb); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -4045,7 +4873,6 @@ END;$$;
 
 
 --
--- TOC entry 991 (class 1255 OID 24644)
 -- Name: bitemporal_entity__change(text, text, text, vrsn.historice_entity_behaviour, boolean, text, text, boolean, boolean, boolean); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -4169,7 +4996,6 @@ $_$;
 
 
 --
--- TOC entry 915 (class 1255 OID 21749)
 -- Name: bitemporal_entity__readme(); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -4187,172 +5013,6 @@ END;
 
 
 --
--- TOC entry 843 (class 1255 OID 21770)
--- Name: bitemporal_entity__register(text, text, vrsn.historice_entity_behaviour, boolean, text, text, boolean); Type: FUNCTION; Schema: vrsn; Owner: -
---
-
-CREATE FUNCTION vrsn.bitemporal_entity__register(table_schema text, table_name text, historice_entity vrsn.historice_entity_behaviour DEFAULT 'always'::vrsn.historice_entity_behaviour, enable_history_attributes boolean DEFAULT NULL::boolean, main_fields_list text DEFAULT NULL::text, cached_fields_list text DEFAULT NULL::text, print_only boolean DEFAULT false) RETURNS text
-    LANGUAGE plpgsql
-    AS $_$
-declare
-/*
-	table_schema text,
-	table_name text,
-    historice_entity              vrsn.historice_entity_behaviour default 'always',
-	enable_history_attributes boolean default null,
-    main_fields_list              TEXT DEFAULT NULL,
-    cached_fields_list TEXT DEFAULT NULL,
-	print_only boolean DEFAULT false)
-    RETURNS boolean
-*/
-	_table_name ALIAS FOR	table_name;
-	_sqlStr text;
-	_sqlStr_t_attr text='';
-	_view_schema text=table_schema;
-		
-	_view_name text;
-	_attribute_entity_name text;
-
-	t_username	 text;
-
-begin
-	--------------------------------------------------------------------
-	--	get/set user name text
-	t_username =coalesce(
-			vrsn.parameters__get_value('tar', 'params.t_username')::text
-		,	'modify_user_id'
-	);
-
-
-	--------------------------------------------------------------------
-	--	get view name
-	_view_name=vrsn.__bitemporal_entity__get_view_name(table_name);	
-
-
-	--------------------------------------------------------------------
-	--	get Idex for historical search
-	--	for current and history table
-	_sqlStr = e'\n\n' ||
-			vrsn.__bitemporal_entity__get_ddl_tsrange_idx(
-			table_schema, _table_name
-		);
-	_sqlStr = _sqlStr || replace(_sqlStr, '_current','_history');
-
-	--------------------------------------------------------------------
-	--	Get ddl for history table and for view
-	_sqlStr = vrsn.__bitemporal_entity__get_ddl_history_table(
-			table_schema, _table_name
-		) || vrsn.__bitemporal_entity__get_ddl_view(
-			table_schema, _table_name
-		) || _sqlStr;
-
-
-	--------------------------------------------------------------------
-	--	Manage attribute handling
-	if historice_entity <> 'never' and 	enable_history_attributes then
-
-		--------------------------------------------------------------------
-		--	add Instruction to generate object for attribute table
-		
-		_sqlStr =$$---------------------------------------------------------
---	ATTENZIONE!
---	A fine esecuzione è presente lo step di chiamata a questa procedura
---	per registrare la tabella degli attributi
---	Se l'opzione print_only è attiva va recuperato il testo ritornato
---	ed eseguito autonomamente.
-
-		
-		$$ ||_sqlStr;
-
-		--------------------------------------------------------------------
-		--	get name of attribute table (use var temporary)
-		_attribute_entity_name = vrsn.__bitemporal_entity__get_attribute_table_name(_table_name);
-
-		--------------------------------------------------------------------
-		--	get DDL for attribute table
-		_sqlStr = _sqlStr
-			|| vrsn.__bitemporal_entity__get_ddl_attribute_table (
-					table_schema
-				,	_table_name
-				,	_attribute_entity_name);
-
-
-		--------------------------------------------------------------------
-		--	get Call to this funciton with attribute table
-		_sqlStr_t_attr = format($$
-		
-		select vrsn.bitemporal_entity__register(
-				table_schema				=>	quote_ident('%1$s')
-			,	table_name					=>	quote_ident('%2$s')
-			,   historice_entity			=>'always'
-			,	enable_history_attributes	=>false
-    		,	print_only					=>  %3$s
-			);	$$
-			,	table_schema
-			,	_attribute_entity_name
-			,	case when print_only then 'true' else 'false' end);
-
-
-		--------------------------------------------------------------------
-		--	set entity full name correctly
-		_attribute_entity_name = format ('%I.%I'
-			,	table_schema
-			,	vrsn.__bitemporal_entity__get_view_name(_attribute_entity_name)
-		);
-			
-	end if;
-	
-
-	--------------------------------------------------------------------
-	--	Insert def entity behaviour record
-
-	_sqlStr = _sqlStr || 
-		format($$
-		INSERT INTO vrsn.def_entity_behavior(
-		 		entity_full_name.schema_name
-			,	entity_full_name.table_name
-			,	attribute_entity_full_name
-		 	,	historice_entity, enable_history_attributes
-			,	main_fields_list, cached_fields_list, %8$s
-			,	action_hints)
-		VALUES (%1$s, %2$s
-			, %3$s::text::vrsn.entity_fullname_dmn
-			, %4$s, %5$s
-			, %6$s, %7$s, 'process:vrsn.register'
-			, '{"onDupKey":"update"}'::jsonb);$$
-		,	quote_nullable(_view_schema)
-		,	quote_nullable(_view_name)
-		,	quote_nullable(_attribute_entity_name)
-		,	quote_nullable(historice_entity)
-		,	enable_history_attributes::text
-		,	quote_nullable(main_fields_list)
-		,	quote_nullable(cached_fields_list)
-		,	t_username
-		)
-		||	_sqlStr_t_attr
-	;
-
-	--raise notice '%', _sqlStr;
-
-	if not print_only then
-
-		execute _sqlStr;
-		
-		_sqlStr = format('Registered Entity %s.%s', _view_schema, _view_name);
-		
-	else
-
-		_sqlStr = _sqlStr || format(e'\n\n--Registered Entity %s.%s', _view_schema, _view_name);
-	end if;
-	
-	return _sqlStr;
-
-end;
-$_$;
-
-
---
--- TOC entry 907 (class 1255 OID 20943)
 -- Name: bitemporal_record__build(text, timestamp with time zone, timestamp with time zone); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -4390,7 +5050,6 @@ $$;
 
 
 --
--- TOC entry 908 (class 1255 OID 21066)
 -- Name: bitemporal_record__get_deactiovation_ts(vrsn.bitemporal_record); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -4402,7 +5061,6 @@ END;
 
 
 --
--- TOC entry 899 (class 1255 OID 20849)
 -- Name: bitemporal_record__is_active(vrsn.bitemporal_record); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -4414,7 +5072,6 @@ END;
 
 
 --
--- TOC entry 835 (class 1255 OID 19938)
 -- Name: bitemporal_tsrange__close(tstzrange, timestamp with time zone); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -4430,7 +5087,6 @@ end;$$;
 
 
 --
--- TOC entry 831 (class 1255 OID 19939)
 -- Name: bitemporal_tsrange__create(timestamp with time zone); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -4442,7 +5098,17 @@ end;$$;
 
 
 --
--- TOC entry 920 (class 1255 OID 22257)
+-- Name: entity_fullname_type__readme(); Type: FUNCTION; Schema: vrsn; Owner: -
+--
+
+CREATE FUNCTION vrsn.entity_fullname_type__readme() RETURNS text
+    LANGUAGE sql IMMUTABLE PARALLEL SAFE
+    BEGIN ATOMIC
+ SELECT 'Boring collection of method to properly manage the user type: entity_fullname_type'::text AS text;
+END;
+
+
+--
 -- Name: get_resolved_default_value(text); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -4481,7 +5147,6 @@ $$;
 
 
 --
--- TOC entry 832 (class 1255 OID 19940)
 -- Name: json_schema_ts_formatter(timestamp with time zone, text); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -4507,79 +5172,74 @@ end;$$;
 
 
 --
--- TOC entry 961 (class 1255 OID 22785)
+-- Name: jsonb_table_structure__build(vrsn.table_field_details[]); Type: FUNCTION; Schema: vrsn; Owner: -
+--
+
+CREATE FUNCTION vrsn.jsonb_table_structure__build(p_fields_data vrsn.table_field_details[]) RETURNS jsonb
+    LANGUAGE sql
+    AS $$
+	WITH jb1 AS (
+		SELECT 
+			l.field_name,
+			json_build_object(
+				'type', l.data_type, 
+				'generated', l.generation_type, 
+				'pk', l.is_pk, 
+				'pk_order', l.pk_order, 
+				'default_value', l.default_value, 
+				'field_order', l.table_order
+			) AS obj
+		FROM unnest(p_fields_data) l
+		ORDER BY l.table_order
+	)
+	SELECT jsonb_object_agg(jb1.field_name, jb1.obj)
+	FROM jb1;
+$$;
+
+
+--
 -- Name: jsonb_table_structure__build(vrsn.entity_fullname_type); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
 CREATE FUNCTION vrsn.jsonb_table_structure__build(table_full_name vrsn.entity_fullname_type) RETURNS jsonb
-    LANGUAGE sql IMMUTABLE PARALLEL SAFE
-    BEGIN ATOMIC
- SELECT vrsn_old._d_jsonb_table_structure__build((table_full_name).table_name, (table_full_name).schema_name) AS jsonb_table_structure__build;
-END;
+    LANGUAGE sql STABLE PARALLEL SAFE
+    AS $$
+
+ SELECT vrsn.jsonb_table_structure__build((table_full_name).table_name, (table_full_name).schema_name) AS jsonb_table_structure__build;
+$$;
 
 
 --
--- TOC entry 1012 (class 1255 OID 29383)
 -- Name: jsonb_table_structure__build(text, text); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
 CREATE FUNCTION vrsn.jsonb_table_structure__build(name_of_table text, name_of_schema text DEFAULT 'public'::text) RETURNS jsonb
-    LANGUAGE sql IMMUTABLE
-    BEGIN ATOMIC
- WITH tbl AS (
-          SELECT jsonb_table_structure__build.name_of_schema AS sn,
-             jsonb_table_structure__build.name_of_table AS tn
-         ), clm AS (
-          SELECT cs.table_schema,
-             cs.table_name,
-             cs.column_name AS cn,
-                 CASE
-                     WHEN (cs.domain_name IS NOT NULL) THEN (((cs.domain_schema)::text || '.'::text) || (cs.domain_name)::text)
-                     WHEN ((cs.data_type)::text = 'ARRAY'::text) THEN ((((cs.udt_schema)::text || '.'::text) || "substring"((cs.udt_name)::text, 2)) || '[]'::text)
-                     WHEN ((cs.data_type)::text <> 'USER-DEFINED'::text) THEN (cs.data_type)::text
-                     ELSE (((cs.udt_schema)::text || '.'::text) || (cs.udt_name)::text)
-                 END AS ct,
-                 CASE
-                     WHEN (((cs.is_identity)::text = 'YES'::text) AND ((cs.identity_generation)::text = 'BY DEFAULT'::text)) THEN 'default'::text
-                     WHEN (((cs.is_identity)::text = 'YES'::text) AND ((cs.identity_generation)::text = 'ALWAYS'::text)) THEN 'identity'::text
-                     WHEN ((cs.is_generated)::text = 'ALWAYS'::text) THEN 'always'::text
-                     WHEN (((cs.is_nullable)::text = 'NO'::text) AND (cs.column_default IS NOT NULL)) THEN 'on_null'::text
-                     ELSE ''::text
-                 END AS cg,
-             cs.ordinal_position,
-             cs.column_default
-            FROM (tbl
-              JOIN information_schema.columns cs ON ((((cs.table_schema)::name = tbl.sn) AND ((cs.table_name)::name = tbl.tn))))
-           ORDER BY cs.ordinal_position
-         ), pk AS (
-          SELECT cu.column_name AS cn
-            FROM ((tbl
-              JOIN information_schema.table_constraints tc ON ((((tc.table_schema)::name = tbl.sn) AND ((tc.table_name)::name = tbl.tn))))
-              JOIN information_schema.key_column_usage cu ON (((tc.constraint_name)::name = (cu.constraint_name)::name)))
-           WHERE ((tc.constraint_type)::text = 'PRIMARY KEY'::text)
-         ), j1 AS (
-          SELECT l.cn,
-             json_build_object('type', l.ct, 'generated', l.cg, 'pk',
-                 CASE
-                     WHEN (pk.cn IS NULL) THEN false
-                     ELSE true
-                 END, 'default_value', l.column_default) AS obj
-            FROM (clm l
-              LEFT JOIN pk ON (((l.cn)::name = (pk.cn)::name)))
-           ORDER BY l.ordinal_position
+    LANGUAGE sql STABLE
+    AS $$
+/*
+ WITH jb1 AS (
+          SELECT l.field_name,
+             json_build_object('type', l.data_type, 'generated', l.generation_type, 'pk', l.is_pk, 'pk_order', l.pk_order, 'default_value', l.default_value, 'field_order', l.table_order) AS obj
+            FROM vrsn.table__get_fields_details(jsonb_table_structure__build.name_of_schema, jsonb_table_structure__build.name_of_table) l(field_name, data_type, default_value, is_nullable, is_pk, pk_order, table_order, generation_type, complete_definition)
+           ORDER BY l.table_order
          )
-  SELECT jsonb_object_agg(j1.cn, j1.obj) AS jsonb_object_agg
-    FROM j1;
-END;
+  SELECT jsonb_object_agg(jb1.field_name, jb1.obj) AS jsonb_object_agg
+    FROM jb1;
+*/
+select vrsn.table_field_details_to_jts_agg(l )
+FROM vrsn.table__get_fields_details(name_of_schema, name_of_table) l
+;
+
+	
+$$;
 
 
 --
--- TOC entry 1019 (class 1255 OID 29387)
 -- Name: jsonb_table_structure__build(vrsn.entity_fullname_type, vrsn.entity_fullname_type); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
 CREATE FUNCTION vrsn.jsonb_table_structure__build(entity_full_name vrsn.entity_fullname_type, table_full_name vrsn.entity_fullname_type) RETURNS jsonb
-    LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE
+    LANGUAGE plpgsql STABLE PARALLEL SAFE
     AS $$
 declare
 /*
@@ -4651,7 +5311,6 @@ $$;
 
 
 --
--- TOC entry 857 (class 1255 OID 20486)
 -- Name: jsonb_table_structure__build_uks(text, text); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -4684,8 +5343,6 @@ END;
 
 
 --
--- TOC entry 4860 (class 0 OID 0)
--- Dependencies: 857
 -- Name: FUNCTION jsonb_table_structure__build_uks(name_of_table text, name_of_schema text); Type: COMMENT; Schema: vrsn; Owner: -
 --
 
@@ -4698,7 +5355,6 @@ Primary key is always the first occurence';
 
 
 --
--- TOC entry 962 (class 1255 OID 22786)
 -- Name: jsonb_table_structure__build_uks(vrsn.entity_fullname_type); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -4710,8 +5366,6 @@ END;
 
 
 --
--- TOC entry 4861 (class 0 OID 0)
--- Dependencies: 962
 -- Name: FUNCTION jsonb_table_structure__build_uks(table_full_name vrsn.entity_fullname_type); Type: COMMENT; Schema: vrsn; Owner: -
 --
 
@@ -4724,7 +5378,6 @@ Primary key is always the first occurence';
 
 
 --
--- TOC entry 939 (class 1255 OID 22522)
 -- Name: jsonb_table_structure__get_insert(extensions.hstore, jsonb); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -4754,7 +5407,6 @@ $$;
 
 
 --
--- TOC entry 833 (class 1255 OID 19948)
 -- Name: jsonb_table_structure__get_pk_where(extensions.hstore, jsonb); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -4785,7 +5437,6 @@ end;$_$;
 
 
 --
--- TOC entry 834 (class 1255 OID 19949)
 -- Name: jsonb_table_structure__get_pk_where(record, jsonb); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -4797,8 +5448,6 @@ end;$$;
 
 
 --
--- TOC entry 4862 (class 0 OID 0)
--- Dependencies: 834
 -- Name: FUNCTION jsonb_table_structure__get_pk_where(rec record, columns_list jsonb); Type: COMMENT; Schema: vrsn; Owner: -
 --
 
@@ -4806,7 +5455,6 @@ COMMENT ON FUNCTION vrsn.jsonb_table_structure__get_pk_where(rec record, columns
 
 
 --
--- TOC entry 868 (class 1255 OID 20490)
 -- Name: jsonb_table_structure__get_uk_where(extensions.hstore, jsonb, jsonb, integer); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -4870,7 +5518,6 @@ $$;
 
 
 --
--- TOC entry 984 (class 1255 OID 22521)
 -- Name: jsonb_table_structure__get_update(extensions.hstore, jsonb); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -4922,7 +5569,6 @@ $_$;
 
 
 --
--- TOC entry 1016 (class 1255 OID 29407)
 -- Name: parameters__get(text, text); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -4972,7 +5618,6 @@ $$;
 
 
 --
--- TOC entry 1018 (class 1255 OID 29408)
 -- Name: parameters__get_subset(text, text, text[]); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -5004,7 +5649,6 @@ $$;
 
 
 --
--- TOC entry 1017 (class 1255 OID 29409)
 -- Name: parameters__get_value(text, text, text); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -5041,7 +5685,66 @@ $$;
 
 
 --
--- TOC entry 969 (class 1255 OID 23083)
+-- Name: table__get_fields_details(text, text); Type: FUNCTION; Schema: vrsn; Owner: -
+--
+
+CREATE FUNCTION vrsn.table__get_fields_details(p_schema_name text, p_table_name text) RETURNS SETOF vrsn.table_field_details
+    LANGUAGE sql
+    AS $$
+	SELECT 
+		a.attname::text as field_name,
+		format_type(a.atttypid, a.atttypmod)::text as data_type,
+		pg_get_expr(ad.adbin, ad.adrelid)::text as default_value,
+		not a.attnotnull as is_nullable,
+		(kcu.column_name is not null)::boolean as is_pk,
+		kcu.ordinal_position::integer as pk_order,
+		a.attnum::integer as table_order,
+		case
+			when ((cs.is_identity)::text = 'YES'::text) and ((cs.identity_generation)::text = 'BY DEFAULT'::text) then 'default'::text
+			when ((cs.is_identity)::text = 'YES'::text) and ((cs.identity_generation)::text = 'ALWAYS'::text) then 'identity'::text
+			when ((cs.is_generated)::text = 'ALWAYS'::text) then 'always'::text
+			when ((cs.is_nullable)::text = 'NO'::text) and (cs.column_default is not null) then 'on_null'::text
+			else ''::text
+		end as generation_type,
+		format('%I %s%s%s', 
+			a.attname, 
+			format_type(a.atttypid, a.atttypmod),
+			case 
+				when ad.adbin is not null then 
+					format(' default %s', pg_get_expr(ad.adbin, ad.adrelid))
+				else ''
+			end,
+			case 
+				when a.attnotnull then ' not null'
+				else ''
+			end
+		)::text as complete_definition
+	from pg_attribute a
+	join pg_class c on c.oid = a.attrelid
+	join pg_namespace n on n.oid = c.relnamespace
+	left join pg_attrdef ad on ad.adrelid = a.attrelid and ad.adnum = a.attnum
+	left join information_schema.columns cs
+		on cs.table_schema = n.nspname
+		and cs.table_name = c.relname
+		and cs.column_name = a.attname
+	left join information_schema.key_column_usage kcu
+		on kcu.table_schema = n.nspname
+		and kcu.table_name = c.relname
+		and kcu.column_name = a.attname
+	left join information_schema.table_constraints tc 
+		on tc.constraint_name = kcu.constraint_name
+		and tc.table_schema = kcu.table_schema
+		and tc.table_name = kcu.table_name
+		and tc.constraint_type = 'PRIMARY KEY'
+	where n.nspname = p_schema_name
+		and c.relname = p_table_name
+		and a.attnum > 0  -- esclude attributi di sistema
+		and not a.attisdropped  -- esclude colonne eliminate
+	order by a.attnum;
+$$;
+
+
+--
 -- Name: tar_h__get(vrsn.entity_fullname_type, anycompatiblearray); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -5061,7 +5764,6 @@ $$;
 
 
 --
--- TOC entry 922 (class 1255 OID 22375)
 -- Name: tar_h__readme(); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -5089,7 +5791,6 @@ END;
 
 
 --
--- TOC entry 966 (class 1255 OID 21460)
 -- Name: test__tar_check(integer, text); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -5293,8 +5994,6 @@ $_$;
 
 
 --
--- TOC entry 4863 (class 0 OID 0)
--- Dependencies: 966
 -- Name: FUNCTION test__tar_check(step_number integer, step_description text); Type: COMMENT; Schema: vrsn; Owner: -
 --
 
@@ -5302,7 +6001,6 @@ COMMENT ON FUNCTION vrsn.test__tar_check(step_number integer, step_description t
 
 
 --
--- TOC entry 912 (class 1255 OID 21499)
 -- Name: test__tar_exec(boolean); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -5786,7 +6484,6 @@ $_$;
 
 
 --
--- TOC entry 911 (class 1255 OID 21454)
 -- Name: test__tar_init(); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -5904,7 +6601,6 @@ end;$$;
 
 
 --
--- TOC entry 914 (class 1255 OID 21676)
 -- Name: trace_ddl(boolean); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -5957,7 +6653,6 @@ $_$;
 
 
 --
--- TOC entry 1006 (class 1255 OID 19970)
 -- Name: trigger_handler(); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -6006,7 +6701,6 @@ end;$$;
 
 
 --
--- TOC entry 960 (class 1255 OID 22783)
 -- Name: trigger_inhibit_dml(); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -6018,7 +6712,6 @@ end;$$;
 
 
 --
--- TOC entry 1913 (class 1255 OID 22720)
 -- Name: entity_fullname_type_agg(vrsn.entity_fullname_type); Type: AGGREGATE; Schema: vrsn; Owner: -
 --
 
@@ -6031,7 +6724,6 @@ CREATE AGGREGATE vrsn.entity_fullname_type_agg(vrsn.entity_fullname_type) (
 
 
 --
--- TOC entry 1914 (class 1255 OID 22722)
 -- Name: entity_fullname_type_string_agg(vrsn.entity_fullname_type, text); Type: AGGREGATE; Schema: vrsn; Owner: -
 --
 
@@ -6043,7 +6735,35 @@ CREATE AGGREGATE vrsn.entity_fullname_type_string_agg(vrsn.entity_fullname_type,
 
 
 --
--- TOC entry 298 (class 1259 OID 22003)
+-- Name: table_field_details_to_jts_agg(vrsn.table_field_details); Type: AGGREGATE; Schema: vrsn; Owner: -
+--
+
+CREATE AGGREGATE vrsn.table_field_details_to_jts_agg(vrsn.table_field_details) (
+    SFUNC = vrsn.__table_field_details__to_jsonb_transfn,
+    STYPE = jsonb,
+    INITCOND = '{}'
+);
+
+
+--
+-- Name: bitemporal_parent_table; Type: TABLE; Schema: vrsn; Owner: -
+--
+
+CREATE TABLE vrsn.bitemporal_parent_table (
+    user_ts_range vrsn.bt_user_ts_range NOT NULL,
+    db_ts_range vrsn.bt_db_ts_range NOT NULL,
+    audit_record vrsn.bt_audit_record
+);
+
+
+--
+-- Name: TABLE bitemporal_parent_table; Type: COMMENT; Schema: vrsn; Owner: -
+--
+
+COMMENT ON TABLE vrsn.bitemporal_parent_table IS 'Table should be used in future as parent for all the bitemporal table';
+
+
+--
 -- Name: attribute_lineage_current; Type: TABLE; Schema: vrsn; Owner: -
 --
 
@@ -6058,7 +6778,6 @@ CREATE TABLE vrsn.attribute_lineage_current (
 
 
 --
--- TOC entry 305 (class 1259 OID 22460)
 -- Name: attribute_mapping_to_entity_current; Type: TABLE; Schema: vrsn; Owner: -
 --
 
@@ -6074,7 +6793,6 @@ CREATE TABLE vrsn.attribute_mapping_to_entity_current (
 
 
 --
--- TOC entry 337 (class 1259 OID 29420)
 -- Name: admin__attribute_defintion_and_usage; Type: VIEW; Schema: vrsn; Owner: -
 --
 
@@ -6111,8 +6829,6 @@ CREATE VIEW vrsn.admin__attribute_defintion_and_usage AS
 
 
 --
--- TOC entry 4864 (class 0 OID 0)
--- Dependencies: 337
 -- Name: VIEW admin__attribute_defintion_and_usage; Type: COMMENT; Schema: vrsn; Owner: -
 --
 
@@ -6120,7 +6836,6 @@ COMMENT ON VIEW vrsn.admin__attribute_defintion_and_usage IS 'Lineage of each at
 
 
 --
--- TOC entry 302 (class 1259 OID 22320)
 -- Name: attribute_lineage; Type: VIEW; Schema: vrsn; Owner: -
 --
 
@@ -6138,7 +6853,6 @@ CREATE VIEW vrsn.attribute_lineage AS
 
 
 --
--- TOC entry 297 (class 1259 OID 22002)
 -- Name: attribute_lineage_current_attribute_id_seq; Type: SEQUENCE; Schema: vrsn; Owner: -
 --
 
@@ -6153,7 +6867,6 @@ ALTER TABLE vrsn.attribute_lineage_current ALTER COLUMN attribute_id ADD GENERAT
 
 
 --
--- TOC entry 301 (class 1259 OID 22313)
 -- Name: attribute_lineage_history; Type: TABLE; Schema: vrsn; Owner: -
 --
 
@@ -6164,7 +6877,6 @@ ALTER TABLE ONLY vrsn.attribute_lineage_history ALTER COLUMN bt_info SET NOT NUL
 
 
 --
--- TOC entry 332 (class 1259 OID 25050)
 -- Name: attribute_mapping_to_entity; Type: VIEW; Schema: vrsn; Owner: -
 --
 
@@ -6183,7 +6895,6 @@ CREATE VIEW vrsn.attribute_mapping_to_entity AS
 
 
 --
--- TOC entry 331 (class 1259 OID 25043)
 -- Name: attribute_mapping_to_entity_history; Type: TABLE; Schema: vrsn; Owner: -
 --
 
@@ -6194,13 +6905,26 @@ ALTER TABLE ONLY vrsn.attribute_mapping_to_entity_history ALTER COLUMN bt_info S
 
 
 --
--- TOC entry 325 (class 1259 OID 24615)
+-- Name: bitemporal_parent_attribute_table; Type: TABLE; Schema: vrsn; Owner: -
+--
+
+CREATE TABLE vrsn.bitemporal_parent_attribute_table (
+    attribute_id bigint NOT NULL,
+    idx text DEFAULT ''::text NOT NULL,
+    attribute_value text
+);
+
+
+--
 -- Name: def_entity_behavior_current; Type: TABLE; Schema: vrsn; Owner: -
 --
 
 CREATE TABLE vrsn.def_entity_behavior_current (
     bt_info vrsn.bitemporal_record NOT NULL,
     entity_full_name vrsn.entity_fullname_dmn NOT NULL,
+    current_view_full_name vrsn.entity_fullname_dmn NOT NULL,
+    current_table_full_name vrsn.entity_fullname_dmn NOT NULL,
+    history_table_full_name vrsn.entity_fullname_dmn NOT NULL,
     attribute_entity_full_name vrsn.entity_fullname_dmn,
     historice_entity vrsn.historice_entity_behaviour DEFAULT 'always'::vrsn.historice_entity_behaviour NOT NULL,
     enable_history_attributes boolean DEFAULT false NOT NULL,
@@ -6209,13 +6933,12 @@ CREATE TABLE vrsn.def_entity_behavior_current (
     mitigate_conflicts boolean DEFAULT true NOT NULL,
     ignore_unchanged_values boolean DEFAULT true NOT NULL,
     enable_attribute_to_fields_replacement boolean DEFAULT false NOT NULL,
-    field_special_behavior jsonb
+    field_special_behavior jsonb,
+    CONSTRAINT def_entity_behavior_current_check CHECK (((NOT enable_history_attributes) OR (attribute_entity_full_name IS NOT NULL)))
 );
 
 
 --
--- TOC entry 4865 (class 0 OID 0)
--- Dependencies: 325
 -- Name: COLUMN def_entity_behavior_current.main_fields_list; Type: COMMENT; Schema: vrsn; Owner: -
 --
 
@@ -6224,8 +6947,6 @@ when of them changes historices of enitre table is triggered';
 
 
 --
--- TOC entry 4866 (class 0 OID 0)
--- Dependencies: 325
 -- Name: COLUMN def_entity_behavior_current.cached_fields_list; Type: COMMENT; Schema: vrsn; Owner: -
 --
 
@@ -6233,8 +6954,6 @@ COMMENT ON COLUMN vrsn.def_entity_behavior_current.cached_fields_list IS 'list o
 
 
 --
--- TOC entry 4867 (class 0 OID 0)
--- Dependencies: 325
 -- Name: COLUMN def_entity_behavior_current.enable_attribute_to_fields_replacement; Type: COMMENT; Schema: vrsn; Owner: -
 --
 
@@ -6244,12 +6963,14 @@ if  there is an attribute called "foo" and "foo" is also a field of main table, 
 
 
 --
--- TOC entry 335 (class 1259 OID 29377)
 -- Name: def_entity_behavior; Type: VIEW; Schema: vrsn; Owner: -
 --
 
 CREATE VIEW vrsn.def_entity_behavior AS
  SELECT s.entity_full_name,
+    s.current_view_full_name,
+    s.current_table_full_name,
+    s.history_table_full_name,
     s.attribute_entity_full_name,
     s.historice_entity,
     s.enable_history_attributes,
@@ -6267,7 +6988,6 @@ CREATE VIEW vrsn.def_entity_behavior AS
 
 
 --
--- TOC entry 330 (class 1259 OID 25015)
 -- Name: def_entity_behavior_history; Type: TABLE; Schema: vrsn; Owner: -
 --
 
@@ -6277,7 +6997,6 @@ INHERITS (vrsn.def_entity_behavior_current);
 
 
 --
--- TOC entry 296 (class 1259 OID 21790)
 -- Name: parameter_current; Type: TABLE; Schema: vrsn; Owner: -
 --
 
@@ -6291,7 +7010,6 @@ CREATE TABLE vrsn.parameter_current (
 
 
 --
--- TOC entry 300 (class 1259 OID 22284)
 -- Name: parameter; Type: VIEW; Schema: vrsn; Owner: -
 --
 
@@ -6308,7 +7026,6 @@ CREATE VIEW vrsn.parameter AS
 
 
 --
--- TOC entry 299 (class 1259 OID 22277)
 -- Name: parameter_history; Type: TABLE; Schema: vrsn; Owner: -
 --
 
@@ -6318,7 +7035,6 @@ INHERITS (vrsn.parameter_current);
 
 
 --
--- TOC entry 319 (class 1259 OID 24542)
 -- Name: test_table_current; Type: TABLE; Schema: vrsn; Owner: -
 --
 
@@ -6333,7 +7049,6 @@ CREATE TABLE vrsn.test_table_current (
 
 
 --
--- TOC entry 321 (class 1259 OID 24556)
 -- Name: test_table; Type: VIEW; Schema: vrsn; Owner: -
 --
 
@@ -6351,7 +7066,6 @@ CREATE VIEW vrsn.test_table AS
 
 
 --
--- TOC entry 322 (class 1259 OID 24565)
 -- Name: test_table_attribute_current; Type: TABLE; Schema: vrsn; Owner: -
 --
 
@@ -6365,7 +7079,6 @@ CREATE TABLE vrsn.test_table_attribute_current (
 
 
 --
--- TOC entry 333 (class 1259 OID 28145)
 -- Name: test_table_attribute; Type: VIEW; Schema: vrsn; Owner: -
 --
 
@@ -6382,7 +7095,6 @@ CREATE VIEW vrsn.test_table_attribute AS
 
 
 --
--- TOC entry 323 (class 1259 OID 24579)
 -- Name: test_table_attribute_history; Type: TABLE; Schema: vrsn; Owner: -
 --
 
@@ -6392,7 +7104,6 @@ INHERITS (vrsn.test_table_attribute_current);
 
 
 --
--- TOC entry 295 (class 1259 OID 21483)
 -- Name: test_table_check_run; Type: TABLE; Schema: vrsn; Owner: -
 --
 
@@ -6404,7 +7115,6 @@ CREATE TABLE vrsn.test_table_check_run (
 
 
 --
--- TOC entry 334 (class 1259 OID 28194)
 -- Name: test_table_check_run_attribute_detail; Type: TABLE; Schema: vrsn; Owner: -
 --
 
@@ -6441,7 +7151,6 @@ CREATE TABLE vrsn.test_table_check_run_attribute_detail (
 
 
 --
--- TOC entry 324 (class 1259 OID 24596)
 -- Name: test_table_check_run_detail; Type: TABLE; Schema: vrsn; Owner: -
 --
 
@@ -6479,7 +7188,6 @@ CREATE TABLE vrsn.test_table_check_run_detail (
 
 
 --
--- TOC entry 318 (class 1259 OID 24541)
 -- Name: test_table_current_id_seq; Type: SEQUENCE; Schema: vrsn; Owner: -
 --
 
@@ -6495,7 +7203,6 @@ ALTER TABLE vrsn.test_table_current ALTER COLUMN id ADD GENERATED BY DEFAULT AS 
 
 
 --
--- TOC entry 320 (class 1259 OID 24549)
 -- Name: test_table_history; Type: TABLE; Schema: vrsn; Owner: -
 --
 
@@ -6505,7 +7212,6 @@ INHERITS (vrsn.test_table_current);
 
 
 --
--- TOC entry 317 (class 1259 OID 23088)
 -- Name: trigger_activation_record_base_changelog; Type: TABLE; Schema: vrsn; Owner: -
 --
 
@@ -6518,7 +7224,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_base_changelog ALTER COLUMN last
 
 
 --
--- TOC entry 313 (class 1259 OID 23032)
 -- Name: trigger_activation_record_stack_trace_p00; Type: TABLE; Schema: vrsn; Owner: -
 --
 
@@ -6528,7 +7233,6 @@ INHERITS (vrsn.trigger_activation_record_stack_trace_parent);
 
 
 --
--- TOC entry 314 (class 1259 OID 23044)
 -- Name: trigger_activation_record_stack_trace_p01; Type: TABLE; Schema: vrsn; Owner: -
 --
 
@@ -6538,7 +7242,6 @@ INHERITS (vrsn.trigger_activation_record_stack_trace_parent);
 
 
 --
--- TOC entry 315 (class 1259 OID 23056)
 -- Name: trigger_activation_record_stack_trace_p02; Type: TABLE; Schema: vrsn; Owner: -
 --
 
@@ -6548,7 +7251,6 @@ INHERITS (vrsn.trigger_activation_record_stack_trace_parent);
 
 
 --
--- TOC entry 316 (class 1259 OID 23068)
 -- Name: trigger_activation_record_stack_trace_p03; Type: TABLE; Schema: vrsn; Owner: -
 --
 
@@ -6558,7 +7260,6 @@ INHERITS (vrsn.trigger_activation_record_stack_trace_parent);
 
 
 --
--- TOC entry 311 (class 1259 OID 23019)
 -- Name: trigger_activation_record_stack_trace_parent_rec_id_seq; Type: SEQUENCE; Schema: vrsn; Owner: -
 --
 
@@ -6574,7 +7275,6 @@ ALTER TABLE vrsn.trigger_activation_record_stack_trace_parent ALTER COLUMN rec_i
 
 
 --
--- TOC entry 4566 (class 2604 OID 25018)
 -- Name: def_entity_behavior_history historice_entity; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6582,7 +7282,6 @@ ALTER TABLE ONLY vrsn.def_entity_behavior_history ALTER COLUMN historice_entity 
 
 
 --
--- TOC entry 4567 (class 2604 OID 25019)
 -- Name: def_entity_behavior_history enable_history_attributes; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6590,7 +7289,6 @@ ALTER TABLE ONLY vrsn.def_entity_behavior_history ALTER COLUMN enable_history_at
 
 
 --
--- TOC entry 4568 (class 2604 OID 25020)
 -- Name: def_entity_behavior_history mitigate_conflicts; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6598,7 +7296,6 @@ ALTER TABLE ONLY vrsn.def_entity_behavior_history ALTER COLUMN mitigate_conflict
 
 
 --
--- TOC entry 4569 (class 2604 OID 25021)
 -- Name: def_entity_behavior_history ignore_unchanged_values; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6606,7 +7303,6 @@ ALTER TABLE ONLY vrsn.def_entity_behavior_history ALTER COLUMN ignore_unchanged_
 
 
 --
--- TOC entry 4570 (class 2604 OID 25022)
 -- Name: def_entity_behavior_history enable_attribute_to_fields_replacement; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6614,7 +7310,6 @@ ALTER TABLE ONLY vrsn.def_entity_behavior_history ALTER COLUMN enable_attribute_
 
 
 --
--- TOC entry 4560 (class 2604 OID 24582)
 -- Name: test_table_attribute_history idx; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6622,7 +7317,6 @@ ALTER TABLE ONLY vrsn.test_table_attribute_history ALTER COLUMN idx SET DEFAULT 
 
 
 --
--- TOC entry 4557 (class 2604 OID 23091)
 -- Name: trigger_activation_record_base_changelog last_update_ts; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6630,7 +7324,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_base_changelog ALTER COLUMN last
 
 
 --
--- TOC entry 4558 (class 2604 OID 23092)
 -- Name: trigger_activation_record_base_changelog bt_info_name; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6638,7 +7331,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_base_changelog ALTER COLUMN bt_i
 
 
 --
--- TOC entry 4534 (class 2604 OID 22993)
 -- Name: trigger_activation_record_stack last_update_ts; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6646,7 +7338,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack ALTER COLUMN last_update_t
 
 
 --
--- TOC entry 4535 (class 2604 OID 22994)
 -- Name: trigger_activation_record_stack bt_info_name; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6654,7 +7345,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack ALTER COLUMN bt_info_name 
 
 
 --
--- TOC entry 4541 (class 2604 OID 23035)
 -- Name: trigger_activation_record_stack_trace_p00 last_update_ts; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6662,7 +7352,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack_trace_p00 ALTER COLUMN las
 
 
 --
--- TOC entry 4542 (class 2604 OID 23036)
 -- Name: trigger_activation_record_stack_trace_p00 bt_info_name; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6670,7 +7359,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack_trace_p00 ALTER COLUMN bt_
 
 
 --
--- TOC entry 4543 (class 2604 OID 23037)
 -- Name: trigger_activation_record_stack_trace_p00 status; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6678,7 +7366,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack_trace_p00 ALTER COLUMN sta
 
 
 --
--- TOC entry 4544 (class 2604 OID 23038)
 -- Name: trigger_activation_record_stack_trace_p00 trace_ts; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6686,7 +7373,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack_trace_p00 ALTER COLUMN tra
 
 
 --
--- TOC entry 4545 (class 2604 OID 23047)
 -- Name: trigger_activation_record_stack_trace_p01 last_update_ts; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6694,7 +7380,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack_trace_p01 ALTER COLUMN las
 
 
 --
--- TOC entry 4546 (class 2604 OID 23048)
 -- Name: trigger_activation_record_stack_trace_p01 bt_info_name; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6702,7 +7387,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack_trace_p01 ALTER COLUMN bt_
 
 
 --
--- TOC entry 4547 (class 2604 OID 23049)
 -- Name: trigger_activation_record_stack_trace_p01 status; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6710,7 +7394,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack_trace_p01 ALTER COLUMN sta
 
 
 --
--- TOC entry 4548 (class 2604 OID 23050)
 -- Name: trigger_activation_record_stack_trace_p01 trace_ts; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6718,7 +7401,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack_trace_p01 ALTER COLUMN tra
 
 
 --
--- TOC entry 4549 (class 2604 OID 23059)
 -- Name: trigger_activation_record_stack_trace_p02 last_update_ts; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6726,7 +7408,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack_trace_p02 ALTER COLUMN las
 
 
 --
--- TOC entry 4550 (class 2604 OID 23060)
 -- Name: trigger_activation_record_stack_trace_p02 bt_info_name; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6734,7 +7415,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack_trace_p02 ALTER COLUMN bt_
 
 
 --
--- TOC entry 4551 (class 2604 OID 23061)
 -- Name: trigger_activation_record_stack_trace_p02 status; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6742,7 +7422,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack_trace_p02 ALTER COLUMN sta
 
 
 --
--- TOC entry 4552 (class 2604 OID 23062)
 -- Name: trigger_activation_record_stack_trace_p02 trace_ts; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6750,7 +7429,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack_trace_p02 ALTER COLUMN tra
 
 
 --
--- TOC entry 4553 (class 2604 OID 23071)
 -- Name: trigger_activation_record_stack_trace_p03 last_update_ts; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6758,7 +7436,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack_trace_p03 ALTER COLUMN las
 
 
 --
--- TOC entry 4554 (class 2604 OID 23072)
 -- Name: trigger_activation_record_stack_trace_p03 bt_info_name; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6766,7 +7443,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack_trace_p03 ALTER COLUMN bt_
 
 
 --
--- TOC entry 4555 (class 2604 OID 23073)
 -- Name: trigger_activation_record_stack_trace_p03 status; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6774,7 +7450,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack_trace_p03 ALTER COLUMN sta
 
 
 --
--- TOC entry 4556 (class 2604 OID 23074)
 -- Name: trigger_activation_record_stack_trace_p03 trace_ts; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6782,7 +7457,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack_trace_p03 ALTER COLUMN tra
 
 
 --
--- TOC entry 4537 (class 2604 OID 23023)
 -- Name: trigger_activation_record_stack_trace_parent last_update_ts; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6790,7 +7464,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack_trace_parent ALTER COLUMN 
 
 
 --
--- TOC entry 4538 (class 2604 OID 23024)
 -- Name: trigger_activation_record_stack_trace_parent bt_info_name; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6798,7 +7471,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack_trace_parent ALTER COLUMN 
 
 
 --
--- TOC entry 4539 (class 2604 OID 23025)
 -- Name: trigger_activation_record_stack_trace_parent status; Type: DEFAULT; Schema: vrsn; Owner: -
 --
 
@@ -6806,7 +7478,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack_trace_parent ALTER COLUMN 
 
 
 --
--- TOC entry 4583 (class 2606 OID 22472)
 -- Name: attribute_lineage_current attribute_lineage_current_pk; Type: CONSTRAINT; Schema: vrsn; Owner: -
 --
 
@@ -6815,7 +7486,6 @@ ALTER TABLE ONLY vrsn.attribute_lineage_current
 
 
 --
--- TOC entry 4585 (class 2606 OID 22011)
 -- Name: attribute_lineage_current attribute_lineage_current_uk; Type: CONSTRAINT; Schema: vrsn; Owner: -
 --
 
@@ -6824,7 +7494,6 @@ ALTER TABLE ONLY vrsn.attribute_lineage_current
 
 
 --
--- TOC entry 4593 (class 2606 OID 22319)
 -- Name: attribute_lineage_history attribute_lineage_history_pk; Type: CONSTRAINT; Schema: vrsn; Owner: -
 --
 
@@ -6833,7 +7502,6 @@ ALTER TABLE ONLY vrsn.attribute_lineage_history
 
 
 --
--- TOC entry 4597 (class 2606 OID 22481)
 -- Name: attribute_mapping_to_entity_current attribute_mapping_to_entity_current_pk; Type: CONSTRAINT; Schema: vrsn; Owner: -
 --
 
@@ -6842,7 +7510,6 @@ ALTER TABLE ONLY vrsn.attribute_mapping_to_entity_current
 
 
 --
--- TOC entry 4649 (class 2606 OID 25049)
 -- Name: attribute_mapping_to_entity_history attribute_mapping_to_entity_history_pk; Type: CONSTRAINT; Schema: vrsn; Owner: -
 --
 
@@ -6851,16 +7518,14 @@ ALTER TABLE ONLY vrsn.attribute_mapping_to_entity_history
 
 
 --
--- TOC entry 4572 (class 2606 OID 24628)
--- Name: def_entity_behavior_current def_entity_behavior_current_check; Type: CHECK CONSTRAINT; Schema: vrsn; Owner: -
+-- Name: bitemporal_parent_attribute_table bitemporal_parent_attribute_table_pk; Type: CONSTRAINT; Schema: vrsn; Owner: -
 --
 
-ALTER TABLE vrsn.def_entity_behavior_current
-    ADD CONSTRAINT def_entity_behavior_current_check CHECK (((NOT enable_history_attributes) OR (attribute_entity_full_name IS NOT NULL))) NOT VALID;
+ALTER TABLE ONLY vrsn.bitemporal_parent_attribute_table
+    ADD CONSTRAINT bitemporal_parent_attribute_table_pk PRIMARY KEY (attribute_id, idx);
 
 
 --
--- TOC entry 4641 (class 2606 OID 24626)
 -- Name: def_entity_behavior_current def_entity_behavior_current_pk; Type: CONSTRAINT; Schema: vrsn; Owner: -
 --
 
@@ -6869,7 +7534,6 @@ ALTER TABLE ONLY vrsn.def_entity_behavior_current
 
 
 --
--- TOC entry 4645 (class 2606 OID 25027)
 -- Name: def_entity_behavior_history def_entity_behavior_history_pk; Type: CONSTRAINT; Schema: vrsn; Owner: -
 --
 
@@ -6878,7 +7542,6 @@ ALTER TABLE ONLY vrsn.def_entity_behavior_history
 
 
 --
--- TOC entry 4589 (class 2606 OID 22283)
 -- Name: parameter_history parameter_history_pk; Type: CONSTRAINT; Schema: vrsn; Owner: -
 --
 
@@ -6887,7 +7550,6 @@ ALTER TABLE ONLY vrsn.parameter_history
 
 
 --
--- TOC entry 4580 (class 2606 OID 21796)
 -- Name: parameter_current parameter_pk; Type: CONSTRAINT; Schema: vrsn; Owner: -
 --
 
@@ -6896,7 +7558,6 @@ ALTER TABLE ONLY vrsn.parameter_current
 
 
 --
--- TOC entry 4631 (class 2606 OID 24572)
 -- Name: test_table_attribute_current test_table_attribute_current_pk; Type: CONSTRAINT; Schema: vrsn; Owner: -
 --
 
@@ -6905,7 +7566,6 @@ ALTER TABLE ONLY vrsn.test_table_attribute_current
 
 
 --
--- TOC entry 4635 (class 2606 OID 24586)
 -- Name: test_table_attribute_history test_table_attribute_history_pk; Type: CONSTRAINT; Schema: vrsn; Owner: -
 --
 
@@ -6914,7 +7574,6 @@ ALTER TABLE ONLY vrsn.test_table_attribute_history
 
 
 --
--- TOC entry 4652 (class 2606 OID 28201)
 -- Name: test_table_check_run_attribute_detail test_table_check_run_attribute_detail_pk; Type: CONSTRAINT; Schema: vrsn; Owner: -
 --
 
@@ -6923,7 +7582,6 @@ ALTER TABLE ONLY vrsn.test_table_check_run_attribute_detail
 
 
 --
--- TOC entry 4638 (class 2606 OID 24602)
 -- Name: test_table_check_run_detail test_table_check_run_detail_pk; Type: CONSTRAINT; Schema: vrsn; Owner: -
 --
 
@@ -6932,7 +7590,6 @@ ALTER TABLE ONLY vrsn.test_table_check_run_detail
 
 
 --
--- TOC entry 4575 (class 2606 OID 21489)
 -- Name: test_table_check_run test_table_check_run_pk; Type: CONSTRAINT; Schema: vrsn; Owner: -
 --
 
@@ -6941,7 +7598,6 @@ ALTER TABLE ONLY vrsn.test_table_check_run
 
 
 --
--- TOC entry 4623 (class 2606 OID 24548)
 -- Name: test_table_current test_table_current_pk; Type: CONSTRAINT; Schema: vrsn; Owner: -
 --
 
@@ -6950,7 +7606,6 @@ ALTER TABLE ONLY vrsn.test_table_current
 
 
 --
--- TOC entry 4627 (class 2606 OID 24555)
 -- Name: test_table_history test_table_history_pk; Type: CONSTRAINT; Schema: vrsn; Owner: -
 --
 
@@ -6959,7 +7614,6 @@ ALTER TABLE ONLY vrsn.test_table_history
 
 
 --
--- TOC entry 4618 (class 2606 OID 23096)
 -- Name: trigger_activation_record_base_changelog trigger_activation_record_base_changelog_pk; Type: CONSTRAINT; Schema: vrsn; Owner: -
 --
 
@@ -6968,7 +7622,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_base_changelog
 
 
 --
--- TOC entry 4620 (class 2606 OID 23098)
 -- Name: trigger_activation_record_base_changelog trigger_activation_record_base_changelog_uk; Type: CONSTRAINT; Schema: vrsn; Owner: -
 --
 
@@ -6977,7 +7630,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_base_changelog
 
 
 --
--- TOC entry 4600 (class 2606 OID 22747)
 -- Name: trigger_activation_record_base trigger_activation_record_base_pk; Type: CONSTRAINT; Schema: vrsn; Owner: -
 --
 
@@ -6986,7 +7638,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_base
 
 
 --
--- TOC entry 4602 (class 2606 OID 22999)
 -- Name: trigger_activation_record_stack trigger_activation_record_stack_pk; Type: CONSTRAINT; Schema: vrsn; Owner: -
 --
 
@@ -6995,7 +7646,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack
 
 
 --
--- TOC entry 4607 (class 2606 OID 23042)
 -- Name: trigger_activation_record_stack_trace_p00 trigger_activation_record_stack_trace_p00_pk; Type: CONSTRAINT; Schema: vrsn; Owner: -
 --
 
@@ -7004,7 +7654,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack_trace_p00
 
 
 --
--- TOC entry 4610 (class 2606 OID 23054)
 -- Name: trigger_activation_record_stack_trace_p01 trigger_activation_record_stack_trace_p01_pk; Type: CONSTRAINT; Schema: vrsn; Owner: -
 --
 
@@ -7013,7 +7662,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack_trace_p01
 
 
 --
--- TOC entry 4613 (class 2606 OID 23066)
 -- Name: trigger_activation_record_stack_trace_p02 trigger_activation_record_stack_trace_p02_pk; Type: CONSTRAINT; Schema: vrsn; Owner: -
 --
 
@@ -7022,7 +7670,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack_trace_p02
 
 
 --
--- TOC entry 4616 (class 2606 OID 23078)
 -- Name: trigger_activation_record_stack_trace_p03 trigger_activation_record_stack_trace_p03_pk; Type: CONSTRAINT; Schema: vrsn; Owner: -
 --
 
@@ -7031,7 +7678,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack_trace_p03
 
 
 --
--- TOC entry 4604 (class 2606 OID 23030)
 -- Name: trigger_activation_record_stack_trace_parent trigger_activation_record_stack_trace_parent_pk; Type: CONSTRAINT; Schema: vrsn; Owner: -
 --
 
@@ -7040,7 +7686,6 @@ ALTER TABLE ONLY vrsn.trigger_activation_record_stack_trace_parent
 
 
 --
--- TOC entry 4581 (class 1259 OID 22326)
 -- Name: attribute_lineage_current_db_tsr_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7048,7 +7693,6 @@ CREATE INDEX attribute_lineage_current_db_tsr_ix ON vrsn.attribute_lineage_curre
 
 
 --
--- TOC entry 4586 (class 1259 OID 22325)
 -- Name: attribute_lineage_current_user_db_tsr_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7056,7 +7700,6 @@ CREATE INDEX attribute_lineage_current_user_db_tsr_ix ON vrsn.attribute_lineage_
 
 
 --
--- TOC entry 4591 (class 1259 OID 22328)
 -- Name: attribute_lineage_history_db_tsr_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7064,7 +7707,6 @@ CREATE INDEX attribute_lineage_history_db_tsr_ix ON vrsn.attribute_lineage_histo
 
 
 --
--- TOC entry 4594 (class 1259 OID 22327)
 -- Name: attribute_lineage_history_user_db_tsr_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7072,7 +7714,6 @@ CREATE INDEX attribute_lineage_history_user_db_tsr_ix ON vrsn.attribute_lineage_
 
 
 --
--- TOC entry 4595 (class 1259 OID 25056)
 -- Name: attribute_mapping_to_entity_current_db_tsr_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7080,7 +7721,6 @@ CREATE INDEX attribute_mapping_to_entity_current_db_tsr_ix ON vrsn.attribute_map
 
 
 --
--- TOC entry 4598 (class 1259 OID 25055)
 -- Name: attribute_mapping_to_entity_current_user_db_tsr_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7088,7 +7728,6 @@ CREATE INDEX attribute_mapping_to_entity_current_user_db_tsr_ix ON vrsn.attribut
 
 
 --
--- TOC entry 4647 (class 1259 OID 25058)
 -- Name: attribute_mapping_to_entity_history_db_tsr_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7096,7 +7735,6 @@ CREATE INDEX attribute_mapping_to_entity_history_db_tsr_ix ON vrsn.attribute_map
 
 
 --
--- TOC entry 4650 (class 1259 OID 25057)
 -- Name: attribute_mapping_to_entity_history_user_db_tsr_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7104,7 +7742,6 @@ CREATE INDEX attribute_mapping_to_entity_history_user_db_tsr_ix ON vrsn.attribut
 
 
 --
--- TOC entry 4639 (class 1259 OID 25034)
 -- Name: def_entity_behavior_current_db_tsr_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7112,7 +7749,6 @@ CREATE INDEX def_entity_behavior_current_db_tsr_ix ON vrsn.def_entity_behavior_c
 
 
 --
--- TOC entry 4642 (class 1259 OID 25033)
 -- Name: def_entity_behavior_current_user_db_tsr_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7120,7 +7756,6 @@ CREATE INDEX def_entity_behavior_current_user_db_tsr_ix ON vrsn.def_entity_behav
 
 
 --
--- TOC entry 4643 (class 1259 OID 25036)
 -- Name: def_entity_behavior_history_db_tsr_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7128,7 +7763,6 @@ CREATE INDEX def_entity_behavior_history_db_tsr_ix ON vrsn.def_entity_behavior_h
 
 
 --
--- TOC entry 4646 (class 1259 OID 25035)
 -- Name: def_entity_behavior_history_user_db_tsr_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7136,7 +7770,6 @@ CREATE INDEX def_entity_behavior_history_user_db_tsr_ix ON vrsn.def_entity_behav
 
 
 --
--- TOC entry 4576 (class 1259 OID 22290)
 -- Name: parameter_current_db_tsr_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7144,7 +7777,6 @@ CREATE INDEX parameter_current_db_tsr_ix ON vrsn.parameter_current USING gist ((
 
 
 --
--- TOC entry 4577 (class 1259 OID 21797)
 -- Name: parameter_current_properties_idx; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7152,7 +7784,6 @@ CREATE INDEX parameter_current_properties_idx ON vrsn.parameter_current USING gi
 
 
 --
--- TOC entry 4578 (class 1259 OID 22289)
 -- Name: parameter_current_user_db_tsr_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7160,7 +7791,6 @@ CREATE INDEX parameter_current_user_db_tsr_ix ON vrsn.parameter_current USING gi
 
 
 --
--- TOC entry 4587 (class 1259 OID 22292)
 -- Name: parameter_history_db_tsr_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7168,7 +7798,6 @@ CREATE INDEX parameter_history_db_tsr_ix ON vrsn.parameter_history USING gist ((
 
 
 --
--- TOC entry 4590 (class 1259 OID 22291)
 -- Name: parameter_history_user_db_tsr_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7176,7 +7805,6 @@ CREATE INDEX parameter_history_user_db_tsr_ix ON vrsn.parameter_history USING gi
 
 
 --
--- TOC entry 4629 (class 1259 OID 24593)
 -- Name: test_table_attribute_current_db_tsr_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7184,7 +7812,6 @@ CREATE INDEX test_table_attribute_current_db_tsr_ix ON vrsn.test_table_attribute
 
 
 --
--- TOC entry 4632 (class 1259 OID 24592)
 -- Name: test_table_attribute_current_user_db_tsr_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7192,7 +7819,6 @@ CREATE INDEX test_table_attribute_current_user_db_tsr_ix ON vrsn.test_table_attr
 
 
 --
--- TOC entry 4633 (class 1259 OID 24595)
 -- Name: test_table_attribute_history_db_tsr_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7200,7 +7826,6 @@ CREATE INDEX test_table_attribute_history_db_tsr_ix ON vrsn.test_table_attribute
 
 
 --
--- TOC entry 4636 (class 1259 OID 24594)
 -- Name: test_table_attribute_history_user_db_tsr_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7208,7 +7833,6 @@ CREATE INDEX test_table_attribute_history_user_db_tsr_ix ON vrsn.test_table_attr
 
 
 --
--- TOC entry 4621 (class 1259 OID 24562)
 -- Name: test_table_current_db_tsr_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7216,7 +7840,6 @@ CREATE INDEX test_table_current_db_tsr_ix ON vrsn.test_table_current USING gist 
 
 
 --
--- TOC entry 4624 (class 1259 OID 24561)
 -- Name: test_table_current_user_db_tsr_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7224,7 +7847,6 @@ CREATE INDEX test_table_current_user_db_tsr_ix ON vrsn.test_table_current USING 
 
 
 --
--- TOC entry 4625 (class 1259 OID 24564)
 -- Name: test_table_history_db_tsr_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7232,7 +7854,6 @@ CREATE INDEX test_table_history_db_tsr_ix ON vrsn.test_table_history USING gist 
 
 
 --
--- TOC entry 4628 (class 1259 OID 24563)
 -- Name: test_table_history_user_db_tsr_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7240,7 +7861,6 @@ CREATE INDEX test_table_history_user_db_tsr_ix ON vrsn.test_table_history USING 
 
 
 --
--- TOC entry 4605 (class 1259 OID 23043)
 -- Name: trigger_activation_record_stack_trace_p00_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7248,7 +7868,6 @@ CREATE INDEX trigger_activation_record_stack_trace_p00_ix ON vrsn.trigger_activa
 
 
 --
--- TOC entry 4608 (class 1259 OID 23055)
 -- Name: trigger_activation_record_stack_trace_p01_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7256,7 +7875,6 @@ CREATE INDEX trigger_activation_record_stack_trace_p01_ix ON vrsn.trigger_activa
 
 
 --
--- TOC entry 4611 (class 1259 OID 23067)
 -- Name: trigger_activation_record_stack_trace_p02_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7264,7 +7882,6 @@ CREATE INDEX trigger_activation_record_stack_trace_p02_ix ON vrsn.trigger_activa
 
 
 --
--- TOC entry 4614 (class 1259 OID 23079)
 -- Name: trigger_activation_record_stack_trace_p03_ix; Type: INDEX; Schema: vrsn; Owner: -
 --
 
@@ -7272,7 +7889,6 @@ CREATE INDEX trigger_activation_record_stack_trace_p03_ix ON vrsn.trigger_activa
 
 
 --
--- TOC entry 4661 (class 2620 OID 29425)
 -- Name: admin__attribute_defintion_and_usage attribute_defintion_and_usage_trg; Type: TRIGGER; Schema: vrsn; Owner: -
 --
 
@@ -7280,7 +7896,13 @@ CREATE TRIGGER attribute_defintion_and_usage_trg INSTEAD OF INSERT OR DELETE OR 
 
 
 --
--- TOC entry 4655 (class 2620 OID 22324)
+-- Name: bitemporal_parent_table bt_parent_table_trg; Type: TRIGGER; Schema: vrsn; Owner: -
+--
+
+CREATE TRIGGER bt_parent_table_trg BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON vrsn.bitemporal_parent_table FOR EACH STATEMENT EXECUTE FUNCTION vrsn.trigger_inhibit_dml();
+
+
+--
 -- Name: attribute_lineage trg_attribute_lineage; Type: TRIGGER; Schema: vrsn; Owner: -
 --
 
@@ -7288,7 +7910,6 @@ CREATE TRIGGER trg_attribute_lineage INSTEAD OF INSERT OR DELETE OR UPDATE ON vr
 
 
 --
--- TOC entry 4658 (class 2620 OID 25054)
 -- Name: attribute_mapping_to_entity trg_attribute_mapping_to_table; Type: TRIGGER; Schema: vrsn; Owner: -
 --
 
@@ -7296,7 +7917,6 @@ CREATE TRIGGER trg_attribute_mapping_to_table INSTEAD OF INSERT OR DELETE OR UPD
 
 
 --
--- TOC entry 4660 (class 2620 OID 29381)
 -- Name: def_entity_behavior trg_def_entity_behavior; Type: TRIGGER; Schema: vrsn; Owner: -
 --
 
@@ -7304,7 +7924,6 @@ CREATE TRIGGER trg_def_entity_behavior INSTEAD OF INSERT OR DELETE OR UPDATE ON 
 
 
 --
--- TOC entry 4654 (class 2620 OID 22288)
 -- Name: parameter trg_parameter; Type: TRIGGER; Schema: vrsn; Owner: -
 --
 
@@ -7312,7 +7931,6 @@ CREATE TRIGGER trg_parameter INSTEAD OF INSERT OR DELETE OR UPDATE ON vrsn.param
 
 
 --
--- TOC entry 4657 (class 2620 OID 24560)
 -- Name: test_table trg_test_table; Type: TRIGGER; Schema: vrsn; Owner: -
 --
 
@@ -7320,7 +7938,6 @@ CREATE TRIGGER trg_test_table INSTEAD OF INSERT OR DELETE OR UPDATE ON vrsn.test
 
 
 --
--- TOC entry 4659 (class 2620 OID 28149)
 -- Name: test_table_attribute trg_test_table_attribute; Type: TRIGGER; Schema: vrsn; Owner: -
 --
 
@@ -7328,7 +7945,6 @@ CREATE TRIGGER trg_test_table_attribute INSTEAD OF INSERT OR DELETE OR UPDATE ON
 
 
 --
--- TOC entry 4656 (class 2620 OID 23013)
 -- Name: trigger_activation_record_stack trigger_activation_record_stack_trg; Type: TRIGGER; Schema: vrsn; Owner: -
 --
 
@@ -7336,15 +7952,12 @@ CREATE TRIGGER trigger_activation_record_stack_trg BEFORE INSERT OR DELETE OR UP
 
 
 --
--- TOC entry 4653 (class 2606 OID 22475)
 -- Name: attribute_mapping_to_entity_current attribute_mapping_to_entity_current_fk_attribute_id; Type: FK CONSTRAINT; Schema: vrsn; Owner: -
 --
 
 ALTER TABLE ONLY vrsn.attribute_mapping_to_entity_current
     ADD CONSTRAINT attribute_mapping_to_entity_current_fk_attribute_id FOREIGN KEY (attribute_id) REFERENCES vrsn.attribute_lineage_current(attribute_id) DEFERRABLE INITIALLY DEFERRED NOT VALID;
 
-
--- Completed on 2025-08-18 22:27:21 CEST
 
 --
 -- PostgreSQL database dump complete

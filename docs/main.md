@@ -7,11 +7,11 @@ This bitemporal framework for PostgreSQL automates the management of historical 
 
 ### Architecture and Key Components
 
-* **`common` Schema:** Contains essential utility functions and data types that support the solution, such as `common.key_value_list` for handling structured data.
+* **`common` Schema**: Contains essential utility functions and data types that support the solution, such as `common.key_value_list` for handling structured data.
 
-* **`vrsn` Schema:** This is the core of the solution. It defines the logic, functions, and data types for managing bitemporal records.
+* **`vrsn` Schema**: This is the core of the solution. It defines the logic, functions, and data types for managing bitemporal records.
 
-* **`vrsn.bitemporal_record` Type:** This is the fundamental data type used for the `bt_info` column. It comprises three key components for managing historical and audit data:
+* **`vrsn.bitemporal_record` Type**: This is the fundamental data type used for the `bt_info` column. It comprises three key components for managing historical and audit data:
 
     * `user_ts_range`: The time range during which the data is considered valid from a business perspective (valid time).
 
@@ -19,49 +19,45 @@ This bitemporal framework for PostgreSQL automates the management of historical 
 
     * `audit_record jsonb`: A JSONB record storing audit information, such as the user who performed the operation and the timestamp of the event.
 
-* **`vrsn.historic_entity_behaviour` Type:** An ENUM type that defines how an entity should be historicized, with options like `'always'`, `'never'`, or `'on_main_fields'`, allowing for fine-grained control.
+* **`vrsn.historic_entity_behaviour` Type**: An ENUM type that defines how an entity should be historicized, with options like `'always'`, `'never'`, or `'on_main_fields'`, allowing for fine-grained control.
 
 ---
 
 ### Workflow for Entity Management
 
-1.  **Table Creation:** Start with any entity from your data model and create a corresponding table with the `_current` suffix. This table must include the `bt_info` column of type `vrsn.bitemporal_record`, preferably as the first column, and it should be excluded from the primary key.
+1.  **Table Creation**: Start with any entity from your data model and create a corresponding table with the `_current` suffix. This table must include the `bt_info` column of type `vrsn.bitemporal_record`, preferably as the first column, and it should be excluded from the primary key.
 
-2.  **`bitemporal_register` Function:** This central function automates the creation of the following objects:
+2.  **`bitemporal_register` Function**: This central function automates the creation of the following objects:
 
-    * **The View:** A view with the original entity name (without the `_current` suffix) is created. This view exposes all columns from the `_current` table, along with additional columns for traceability (`is_closed`, `modify_user_id`, `modify_ts`).
+    * **The View**: A view with the original entity name (without the `_current` suffix) is created. This view exposes all columns from the `_current` table, along with additional columns for traceability (`is_closed`, `modify_user_id`, `modify_ts`).
 
-    * **`INSTEAD OF` Trigger:** The view is equipped with a trigger that intercepts all `INSERT`, `UPDATE`, and `DELETE` operations. This trigger delegates the logic to the `vrsn.trigger_handler()` function, which manages the underlying bitemporal logic.
+    * **`INSTEAD OF` Trigger**: The view is equipped with a trigger that intercepts all `INSERT`, `UPDATE`, and `DELETE` operations. This trigger delegates the logic to the `vrsn.trigger_handler()` function, which manages the underlying bitemporal logic.
 
-    * **The History Table:** A table with an `_history` suffix is created to store all historical versions of the data.
+    * **The History Table**: A table with an `_history` suffix is created to store all historical versions of the data.
 
 ---
 
 ### Data Manipulation (DML)
 
-* **Entry Point:** All data manipulation operations (`INSERT`, `UPDATE`) must be performed exclusively on the **view**, never directly on the tables.
+* **Entry Point**: All data manipulation operations (`INSERT`, `UPDATE`) must be performed exclusively on the **view**, never directly on the tables.
 
-* **Logical Deletion:** Physical deletion of a record is not allowed. Instead, an `UPDATE` operation on the view is used to mark a record as logically deleted by updating the `bt_info`'s `audit_record`, setting an `is_closed` flag to `true`. This action ensures that the record's history is preserved while marking it as no longer active.
+* **Logical Deletion**: Physical deletion of a record is not allowed. Instead, an `UPDATE` operation on the view is used to mark a record as logically deleted by updating the `bt_info`'s `audit_record`, setting an `is_closed` flag to `true`. This action ensures that the record's history is preserved while marking it as no longer active.
 
-* **Temporal Deactivation (`vrsn.audit_record__deactivate`):** This function is crucial for **retroactive corrections** that rewrite a new temporal line. If a new modification is introduced with a `user_ts_range` that overlaps or precedes existing history, `vrsn.audit_record__deactivate` is used to logically "deactivate" or "close" the previously valid records in the history. This ensures that the system's understanding of past reality is consistent with the new, corrected information, without physically deleting any data.
+* **Temporal Deactivation (`vrsn.audit_record__deactivate`)**: This function is crucial for **retroactive corrections** that rewrite a new temporal line. If a new modification is introduced with a `user_ts_range` that overlaps or precedes existing history, `vrsn.audit_record__deactivate` is used to logically "deactivate" or "close" the previously valid records in the history. This ensures that the system's understanding of past reality is consistent with the new, corrected information, without physically deleting any data.
 
 ---
 
 ### In-depth Sections
 
+* [**Install**](install.md): This section provides requirements and step to install and upgrade the solution.
 * [**Solution Constraints**](solution_constraints.md): This section provides the main differences, reserved words, constraints, strongly recomended best practice.
-
 * [**Action Hints**](action_hints.md): This section provides a detailed explanation of how `action_hints` can be used to customize trigger behavior.
-
 * [**Updating Entity Attributes with `cached_attribute`**](object_field_behavior.md): This section describes how to enable and use the overwriting of entity attributes using the `vrsn.cached_attribute` domain.
-
 * [**Trigger Activation Rercord**](tar.md): This section describes how the software manage its behavior using a stack variable. 
-
 * [**Configuration Table**](configuration_table.md): This section describe the control tables who governs the bitemporal behavior.
-
-* [**Per-Attribute Historicization:**](attribute_versioning.md) This section will explain the mechanism for historicizing only specific attributes of an entity. This approach can reduce data redundancy and optimize storage for entities with frequently changing fields, as only the changed attributes (or a minimal set of context attributes) will trigger a new historical record.
-
-* **Different Identity Management:** Pay attention with this different behavior regardind autogenerated fields. Normal pgsql raise exception if you pass an autogenerated field in a insert instruction. With Versioning, simply the autogenerated fields are always genereted, ignoring any value passed (bast practice pass: default or null).
+* [**Per-Attribute Historicization**:](attribute_versioning.md) This section will explain the mechanism for historicizing only specific attributes of an entity. This approach can reduce data redundancy and optimize storage for entities with frequently changing fields, as only the changed attributes (or a minimal set of context attributes) will trigger a new historical record.
+* [**Function reference**:](function_reference.md) This section provide main information about funciton (directly from the code).
+* **Different Identity Management**: Pay attention with this different behavior regarding autogenerated fields. Normal pgsql raise exception if you pass an autogenerated field in a insert instruction. With Versioning, simply the auto-generated fields are always generated, ignoring any value passed (bast practice pass: default or null).
 
 ---
 
