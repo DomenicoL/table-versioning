@@ -23,7 +23,7 @@ The first step is to run the `prepare.sh` script, which handles the creation of 
 
 ### 1.1.  Create schema and extensions
 
-```postgres
+```sql
 create schema if not exists common    authorization __your-db-user__;
 create schema if not exists extensions     authorization __your-db-user__;
 create schema if not exists srvc     authorization __your-db-user__;
@@ -110,8 +110,10 @@ You can also load with your preferred software copying the contains of files.
 
 ## 4. If installation goes ok
 
+```bash
 mkdir -p LAST_INSTALL
 cp install_common.sql install_vrsn.sql LAST_INSTALL/
+```
 
 ---
 [main](main.md) - [readme](../README.md)
