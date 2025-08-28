@@ -34,12 +34,13 @@ Here are the primary parameterizations available within the `action_hints` JSONB
     * By providing a timestamp here, you can override the system's `clock_timestamp()` for the `db_ts_range` for the current operation. This is an advanced feature primarily for data migration or specific synchronization scenarios.
     * *(Default: `clock_timestamp()`)*
 
-* **`modify_user_id` (`text`):** While not explicitly part of `action_hints` as an *override*, the `vrsn.trigger_handler()` explicitly checks for this field in the `NEW` record as the source for the `user_id` in the `audit_record`. If not found, an exception is raised. It's the **mandatory** field for user tracking.
-
 * **`modify_ts` (`timestamptz`):** Similar to `modify_user_id`, this field in the `NEW` record is used to set the `user_ts_range` (valid time) of the record. If provided and it's a past date, it triggers the complex temporal deactivation logic described in the main overview.
+
+* **`modify_user_id` (`text`):** While not explicitly part of `action_hints` as an *override*, the `vrsn.trigger_handler()` explicitly checks for this field in the `NEW` record as the source for the `user_id` in the [`audit_record`](audit_record.md). If not found, an exception is raised. It's the **mandatory** field for user tracking.
 
 * **Other Parameters (`extraInfo`):** Any other key-value pairs present in the `action_hints` JSONB that are not recognized by the specific parameters listed above will be collected and stored in the `audit_record` under the `extraInfo` key. This allows for passing custom, application-specific metadata alongside the bitemporal operation without needing to modify the core trigger logic.ac
 
+* [**Audit record**](audit_record.md): take a look to this section to deeply understand usage of `modify_user_id` and `extraInfo`.
 
 ---
 [main](main.md) - [readme](../README.md)

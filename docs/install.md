@@ -34,6 +34,10 @@ create extension btree_gist with schema extensions cascade;
 create extension btree_gin with schema extensions cascade;
 create extension tablefunc with schema extensions cascade;
 create extension hstore with schema extensions cascade;
+
+alter role __your-db-user__ set search_path to "$user", extensions, public;
+alter database __your-db__ set search_path to "$user", extensions, public;
+
 ```
 
 
@@ -74,8 +78,24 @@ Before proceeding, it is **highly recommended** to check the `CHANGELOG.md` file
 ---
 
 ## 3. Installation/Upgrade
+After reviewing the changelog, you can't run the generated SQL files, you must disable check on function's body
 
-After reviewing the changelog, you can run the generated SQL files. Use the `psql` commands to apply the changes to your database.
+### 3.1 Disable check for function's body
+
+Add as first line of the file:
+
+```sql
+SET check_function_bodies = off;
+```
+
+And at end:
+
+```sql
+SET check_function_bodies = on;
+```
+
+### 3.2 Execute the sql
+Use the `psql` commands to apply the changes to your database.
 
 ```bash
 # Replace "your_db_name" with the name of your database
@@ -84,6 +104,9 @@ psql -v ON_ERROR_STOP=1 -d your_db_name -f install_vrsn.sql
 
 The -v ON_ERROR_STOP=1 option will stop the installation on the first error, preventing partial schema corruption.
 ```
+
+You can also load with your preferred software copying the contains of files.
+
 
 ## 4. If installation goes ok
 
