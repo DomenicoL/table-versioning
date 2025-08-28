@@ -12,7 +12,7 @@ Installation and upgrades are managed through scripts, which allow you to custom
 
 ## Installation and Upgrades
 
-To install or upgrade the solution in your database, please follow the detailed instructions in the [INSTALL_README.md](INSTALL_README.md) file.
+To install or upgrade the solution in your database, please follow the detailed instructions in the [install document](docs/install.md).
 
 ---
 
