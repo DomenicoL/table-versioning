@@ -21,7 +21,7 @@ Please ensure you have the following installed:
 The first step is to run the `prepare.sh` script, which handles the creation of personalized installation scripts and the changelog.
 
 
-## 1.1.  Create schema and extensions
+### 1.1.  Create schema and extensions
 
 ```postgres
 create schema if not exists common    authorization __your-db-user__;
@@ -41,13 +41,13 @@ alter database __your-db__ set search_path to "$user", extensions, public;
 ```
 
 
-## 1.2.  Clone the repository and navigate to its directory
+### 1.2.  Clone the repository and navigate to its directory
 
 ```bash
 git clone [https://github.com/your-username/bitemporal-postgresql.git](https://github.com/your-username/bitemporal-postgresql.git)
 cd bitemporal-postgresql
 ```
-## 1.3.  Prepare the scripts
+### 1.3.  Prepare the scripts
 
 Run the `prepare.sh` script. You can customize the schema names using the `-c` and `-v` arguments, otherwise you will be prompted interactively.
 
