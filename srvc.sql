@@ -1,3 +1,6 @@
+-- Disable check on function's body
+SET check_function_bodies = off;
+
 --
 -- PostgreSQL database dump
 --
@@ -2015,3 +2018,5 @@ ALTER TABLE ONLY srvc.schema_to_refact
 -- PostgreSQL database dump complete
 --
 
+
+SET check_function_bodies = on;

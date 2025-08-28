@@ -104,19 +104,6 @@ Method Count: 3
 
 Method Count: 8
 
-#### Deprecated Functions
-
-##### jsonb_keys_to_array
-From scratch a json array becames a list of key value. This function correct this situation
-- *Full Identifier*: `common._d_jsonb_keys_to_array`
-- *Arguments*: `_jb jsonb`
-- *Returns*: `jsonb`
-
-##### jsonb_recursive_left_merge
-- *Full Identifier*: `common._d_jsonb_recursive_left_merge`
-- *Arguments*: `first_jb jsonb, second_jb jsonb`
-- *Returns*: `jsonb`
-
 #### Public Functions
 
 ##### bind_variable
@@ -210,12 +197,12 @@ Output is yet a jsonb
 
 ##### jsonb_recursive_merge
 - *Full Identifier*: `common.jsonb_recursive_merge`
-- *Arguments*: `first_jb jsonb, second_jb jsonb`
+- *Arguments*: `jb_list jsonb[]`
 - *Returns*: `jsonb`
 
 ##### jsonb_recursive_merge (1)
 - *Full Identifier*: `common.jsonb_recursive_merge`
-- *Arguments*: `jb_list jsonb[]`
+- *Arguments*: `first_jb jsonb, second_jb jsonb`
 - *Returns*: `jsonb`
 
 ##### jsonb_set_building_path
@@ -257,7 +244,9 @@ apply a regex_replace for all element of an array
 ##### to_jsonb_with_type
 - *Full Identifier*: `common.to_jsonb_with_type`
 - *Arguments*: `value_to_convert text, type_of_value text`
-- *Returns*: `jsonb`---
+- *Returns*: `jsonb`
+
+---
 [main](main.md) - [readme](../README.md)
 
 ## Schema: srvc
@@ -379,7 +368,9 @@ Method Count: 15
 ##### search_func_ddl
 - *Full Identifier*: `srvc.search_func_ddl`
 - *Arguments*: `p_current_schema text, p_func_er text DEFAULT '.+'::text, p_target_schema text DEFAULT NULL::text`
-- *Returns*: `text`---
+- *Returns*: `text`
+
+---
 [main](main.md) - [readme](../README.md)
 
 ## Schema: vrsn
@@ -399,7 +390,7 @@ Method Count: 9
 
 ##### bitemporal_entity_register
 Easiast way to register a bitemporal table.
-All the parameters as streatda in standard way.
+All the parameters as treathed in standard way.
 
 - *Full Identifier*: `vrsn.admin__bitemporal_entity_register`
 - *Arguments*: `p_current_table_schema text, p_current_table_name text, p_execute boolean DEFAULT false`
@@ -582,13 +573,13 @@ return name for the current table starting from a bitemporal table or view
 ##### get_ddl_view
 Get the standard defintion of view ready for manage bitemporal storage.
 - *Full Identifier*: `vrsn.__bitemporal_entity__get_ddl_view`
-- *Arguments*: `table_schema text, table_name text, full_view_name text DEFAULT NULL::text`
+- *Arguments*: `p_conf jsonb`
 - *Returns*: `text`
 
 ##### get_ddl_view (1)
 Get the standard defintion of view ready for manage bitemporal storage.
 - *Full Identifier*: `vrsn.__bitemporal_entity__get_ddl_view`
-- *Arguments*: `p_conf jsonb`
+- *Arguments*: `table_schema text, table_name text, full_view_name text DEFAULT NULL::text`
 - *Returns*: `text`
 
 ##### get_entity_name
@@ -804,17 +795,17 @@ Method Count: 11
 
 ##### build
 - *Full Identifier*: `vrsn.jsonb_table_structure__build`
-- *Arguments*: `p_fields_data vrsn.table_field_details[]`
+- *Arguments*: `entity_full_name vrsn.entity_fullname_type, table_full_name vrsn.entity_fullname_type`
 - *Returns*: `jsonb`
 
 ##### build (1)
 - *Full Identifier*: `vrsn.jsonb_table_structure__build`
-- *Arguments*: `name_of_table text, name_of_schema text DEFAULT 'public'::text`
+- *Arguments*: `p_fields_data vrsn.table_field_details[]`
 - *Returns*: `jsonb`
 
 ##### build (2)
 - *Full Identifier*: `vrsn.jsonb_table_structure__build`
-- *Arguments*: `entity_full_name vrsn.entity_fullname_type, table_full_name vrsn.entity_fullname_type`
+- *Arguments*: `name_of_table text, name_of_schema text DEFAULT 'public'::text`
 - *Returns*: `jsonb`
 
 ##### build (3)
@@ -830,7 +821,7 @@ retrieve unique keys (also primary) in a jsonb setting:
 
 Primary key is always the first occurence
 - *Full Identifier*: `vrsn.jsonb_table_structure__build_uks`
-- *Arguments*: `name_of_table text, name_of_schema text DEFAULT 'public'::text`
+- *Arguments*: `table_full_name vrsn.entity_fullname_type`
 - *Returns*: `jsonb`
 
 ##### build_uks (1)
@@ -841,7 +832,7 @@ retrieve unique keys (also primary) in a jsonb setting:
 
 Primary key is always the first occurence
 - *Full Identifier*: `vrsn.jsonb_table_structure__build_uks`
-- *Arguments*: `table_full_name vrsn.entity_fullname_type`
+- *Arguments*: `name_of_table text, name_of_schema text DEFAULT 'public'::text`
 - *Returns*: `jsonb`
 
 ##### get_insert
@@ -850,14 +841,14 @@ Primary key is always the first occurence
 - *Returns*: `text`
 
 ##### get_pk_where
-Wrapper for hstore version
 - *Full Identifier*: `vrsn.jsonb_table_structure__get_pk_where`
-- *Arguments*: `rec record, columns_list jsonb`
+- *Arguments*: `rec hstore, columns_list jsonb`
 - *Returns*: `text`
 
 ##### get_pk_where (1)
+Wrapper for hstore version
 - *Full Identifier*: `vrsn.jsonb_table_structure__get_pk_where`
-- *Arguments*: `rec hstore, columns_list jsonb`
+- *Arguments*: `rec record, columns_list jsonb`
 - *Returns*: `text`
 
 ##### get_uk_where
