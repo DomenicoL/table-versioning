@@ -684,16 +684,17 @@ DECLARE
     v_ddl         			text;
 
 	v_sql_v1	constant	text=$$
-		create table if not exists %1$I.%2$I (
-            ::bt_info::        vrsn.bitemporal_record NOT NULL
-         ,	%3$s
-            constraint %2$I_pk primary key(%4$s)
-        );
+-- Create Attribute Table
+create table if not exists %1$I.%2$I (
+	::bt_info::        vrsn.bitemporal_record NOT NULL
+ ,	%3$s
+ ,   constraint %2$I_pk primary key (%4$s)
+);
 	$$;
 	v_sql_v2	constant	text=$$
 		create table if not exists %1$I.%2$I (            
             %3$s
-            constraint %2$I_pk primary key(%4$s)
+        ,    constraint %2$I_pk primary key (%4$s)
         )	INHERITS (vrsn.bitemporal_parent_table) ;
 	$$;
 
@@ -804,32 +805,33 @@ begin
 	v_sqlStr = v_sqlStr || 
 		format($$
 
+-- Register data into vrsn.def_entity_behavior
 		
-		INSERT INTO vrsn.def_entity_behavior(
-		 		entity_full_name.schema_name
-			,	entity_full_name.table_name
-		 	,	current_view_full_name.schema_name
-			,	current_view_full_name.table_name
-		 	,	current_table_full_name.schema_name
-			,	current_table_full_name.table_name
-		 	,	history_table_full_name.schema_name
-			,	history_table_full_name.table_name
-		 	,	attribute_entity_full_name.schema_name
-			,	attribute_entity_full_name.table_name
+INSERT INTO vrsn.def_entity_behavior(
+		entity_full_name.schema_name
+	,	entity_full_name.table_name
+	,	current_view_full_name.schema_name
+	,	current_view_full_name.table_name
+	,	current_table_full_name.schema_name
+	,	current_table_full_name.table_name
+	,	history_table_full_name.schema_name
+	,	history_table_full_name.table_name
+	,	attribute_entity_full_name.schema_name
+	,	attribute_entity_full_name.table_name
 
-		 	,	historice_entity, enable_history_attributes
-			,	main_fields_list, cached_fields_list
-			,	enable_attribute_to_fields_replacement, %16$I
-			,	action_hints)
-		VALUES(	%1$s, %2$s
-			,	%3$s, %4$s
-			,	%5$s, %6$s
-			,	%7$s, %8$s
-			,	%9$s, %10$s
-			,	%11$s, %12$s
-			,	%13$s, %14$s
-			,	%15$s, 'process:vrsn.register'
-			,	'{"onDupKey":"update"}'::jsonb);$$
+	,	historice_entity, enable_history_attributes
+	,	main_fields_list, cached_fields_list
+	,	enable_attribute_to_fields_replacement, %16$I
+	,	action_hints)
+VALUES(	%1$s, %2$s
+	,	%3$s, %4$s
+	,	%5$s, %6$s
+	,	%7$s, %8$s
+	,	%9$s, %10$s
+	,	%11$s, %12$s
+	,	%13$s, %14$s
+	,	%15$s, 'process:vrsn.register'
+	,	'{"onDupKey":"update"}'::jsonb);$$
 		,	quote_nullable((p_conf->'entity'->>'schema_name'))
 		,	quote_nullable((p_conf->'entity'->>'table_name'))
 		,	quote_nullable((p_conf->'current_view'->>'schema_name'))
@@ -976,12 +978,14 @@ $_$;
 
 CREATE FUNCTION vrsn.__bitemporal_entity__get_ddl_history_table(p_conf jsonb) RETURNS text
     LANGUAGE sql IMMUTABLE PARALLEL SAFE
-    BEGIN ATOMIC
+    AS $_$
  SELECT format('
-		CREATE TABLE if not exists %1$I.%2$I (
-    		CONSTRAINT %2$I_pk primary key (%5$s)
-		) INHERITS (%3$I.%4$I);'::text, ((p_conf -> 'history_table'::text) ->> 'schema_name'::text), ((p_conf -> 'history_table'::text) ->> 'table_name'::text), ((p_conf -> 'current_table'::text) ->> 'schema_name'::text), ((p_conf -> 'current_table'::text) ->> 'table_name'::text), common.jsonb_array_to_string((p_conf -> 'history_pk'::text))) AS ddl_text;
-END;
+-- Create history table
+
+CREATE TABLE if not exists %1$I.%2$I (
+	CONSTRAINT %2$I_pk primary key (%5$s)
+) INHERITS (%3$I.%4$I);'::text, ((p_conf -> 'history_table'::text) ->> 'schema_name'::text), ((p_conf -> 'history_table'::text) ->> 'table_name'::text), ((p_conf -> 'current_table'::text) ->> 'schema_name'::text), ((p_conf -> 'current_table'::text) ->> 'table_name'::text), common.jsonb_array_to_string((p_conf -> 'history_pk'::text))) AS ddl_text;
+$_$;
 
 
 --
@@ -1068,6 +1072,9 @@ declare
 */
 	v_ret text='';
 	c_ddl_text	constant	text=$$
+
+-- Create view	
+
 --drop view %1$I.%2$I;
 
 create or replace view %1$I.%2$I as
@@ -1119,93 +1126,6 @@ $_$;
 --
 
 COMMENT ON FUNCTION vrsn.__bitemporal_entity__get_ddl_view(p_conf jsonb) IS 'Get the standard defintion of view ready for manage bitemporal storage.';
-
-
---
--- Name: __bitemporal_entity__get_ddl_view(text, text, text); Type: FUNCTION; Schema: vrsn; Owner: -
---
-
-CREATE FUNCTION vrsn.__bitemporal_entity__get_ddl_view(table_schema text, table_name text, full_view_name text DEFAULT NULL::text) RETURNS text
-    LANGUAGE plpgsql
-    AS $_$
-declare
-/*
-	IN table_schema text
-	, IN table_name text
-	, IN full_view_name text DEFAULT null
-*/
- 	_table_schema alias for table_schema;
-	_table_name alias for table_name;
-	_view_name text;
-	_view_schema text;
-	_colName text;
-	_ret text='';
-	_trigger_name text;
-	_array	text[];
-	_i		integer;
-begin
-	if full_view_name is null then
-		_view_schema=_table_schema;
-		
-		_view_name = vrsn.__bitemporal_entity__get_view_name(_table_name);	
-
-	else
-		_array=string_to_array(full_view_name,'.');
-		
-		if array_length(_array,1)<>2 then
-			raise exception 'full_view_name must be in the format _SCHEMA_._VIEW_NAME_, given: <%>', full_view_name;
-		end if;
-		_view_schema=_array[1];
-		_view_name=_array[2];
-	end if;
-	
-	full_view_name=format('%I.%I', _view_schema, _view_name);
-	
-	_trigger_name='trg_'|| _view_name;
-	
-	for _colName in 
-		SELECT s.column_name
-  		FROM information_schema.columns as s
- 		WHERE s.table_schema = _table_schema
-   		AND s.table_name   = _table_name
-		and s.column_name <> 'bt_info'
-   		order by s.ordinal_position
-	loop
-		_ret=_ret || format( E'\ts.%I\n\t,', _colName ) ;
-	end loop;
-
-	_ret=format($$
---drop view %1$s;
-
-create or replace view %1$s as
-select%2$s	false AS is_closed
-	,	NULL::text AS modify_user_id
-	,	NULL::timestamp with time zone AS modify_ts
-	,   NULL::jsonb AS action_hints
-from only %3$I.%4$I as s;
-				
-CREATE OR REPLACE TRIGGER %5$I
-    INSTEAD OF INSERT OR DELETE OR UPDATE 
-    ON %1$s
-    FOR EACH ROW
-    EXECUTE FUNCTION vrsn.trigger_handler();$$
-	, full_view_name
-	, _ret
-	, _table_schema
-	, _table_name
-	, _trigger_name);
-	
-	
-	return _ret;
-end;
-$_$;
-
-
---
--- Name: FUNCTION __bitemporal_entity__get_ddl_view(table_schema text, table_name text, full_view_name text); Type: COMMENT; Schema: vrsn; Owner: -
---
-
-COMMENT ON FUNCTION vrsn.__bitemporal_entity__get_ddl_view(table_schema text, table_name text, full_view_name text) IS 'Get the standard defintion of view ready for manage bitemporal storage.';
 
 
 --
@@ -1347,6 +1267,20 @@ CREATE FUNCTION vrsn.__entity_fullname_type__eq(a vrsn.entity_fullname_type, b v
     AS $$
     SELECT COALESCE(a.schema_name, 'public') = COALESCE(b.schema_name, 'public')
        AND COALESCE(a.table_name, '') = COALESCE(b.table_name, '');
+$$;
+
+
+--
+-- Name: __entity_fullname_type__from_anyelemet(anyelement); Type: FUNCTION; Schema: vrsn; Owner: -
+--
+
+CREATE FUNCTION vrsn.__entity_fullname_type__from_anyelemet(v_input anyelement) RETURNS vrsn.entity_fullname_type
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+BEGIN
+	return vrsn.__entity_fullname_type__from_string(v_input::text);
+END;
 $$;
 
 
@@ -1817,7 +1751,8 @@ begin
 			--if not, insert
 			v_dml_action=1;
 		elseif	force_rebuild 
-			or	now() >  tar.last_update_ts + INTERVAL '1 week' * coalesce( (tar.func_param->>'tar_week_to_live')::integer,0) 
+			or	now() >  tar.last_update_ts 
+						+ INTERVAL '1 week' * coalesce( (tar.func_param->>'tar_week_to_live')::integer,0) 
 		then
 			--> if yes, but is required a rebuild, or the copy is too old, update
 			v_dml_action=2;
@@ -2662,10 +2597,13 @@ begin
 	select array_agg(elem order by elem)
 	into _final_main_fields_array
 	from (
-		-- elementi da jsonb (pk=true)
-		select key_name as elem
-		from jsonb_each(tar.current_entity_columns_list) as data_entry(key_name, value_obj)
-		where (value_obj ->> 'pk')::boolean = true
+		-- elementi da dizionario (pk=true)		
+		select field_name as elem
+		from vrsn.table__get_fields_details(
+			(tar).current_table_full_name.schema_name,
+			(tar).current_table_full_name.table_name
+		)
+		where is_pk
 		union
 		-- elementi da _main_fields_list
 		select unnest(string_to_array(_main_fields_list, ',')) as elem
@@ -2678,9 +2616,12 @@ begin
 	into _final_cached_fields_array
 	from (
 		-- elementi da jsonb (type='text')
-		select key_name as elem
-		from jsonb_each(tar.current_entity_columns_list) as data_entry(key_name, value_obj)
-		where value_obj ->> 'type' = c_cached_attribute_name
+		select field_name as elem
+		from vrsn.table__get_fields_details(
+			(tar).current_table_full_name.schema_name,
+			(tar).current_table_full_name.table_name
+		)
+		where data_type  = c_cached_attribute_name
 		intersect
 		-- elementi da _cached_fields_list
 		select unnest(string_to_array(_cached_fields_list, ',')) as elem
@@ -3220,7 +3161,14 @@ tar.func_param[c_username] = 'process:vrsn.register';
 	--> merge information 	
 	if (tar).func_state_var.enable_attribute_to_fields_replacement 
 			and not (tar).func_state_var.action_close then
-			
+/*
+raise notice e'\n\n--jsob to fields--\ntar.wrkn_new_rec BEFORE:\n%\n%'
+	, jsonb_pretty(to_jsonb(tar.wrkn_new_rec))
+	,jsonb_pretty(tar.history_attributes_info)
+;
+*/
+
+
 		-- Supponiamo:
 		-- hstore_var = 'jb1=>{"name":"John","jb2":"skip"}, jb2=>{"age":"30","jb1":"skip"}, name=>old, age=>old'
 		-- cached_fields_list = ["jb1", "jb2"]
@@ -3241,14 +3189,39 @@ tar.func_param[c_username] = 'process:vrsn.register';
 					select field_name from cached_fields
 				)
 			), ''::hstore);
+/*			
+declare
+t_hs hstore;
+begin
 
-		
+
+with cached_fields as (
+	select value::text as field_name
+	from jsonb_array_elements_text(tar.history_attributes_info->c_cached_fields_list)
+)
+select hstore(array_agg(key), array_agg(value))
+from cached_fields cf
+cross join jsonb_each_text((tar.wrkn_new_rec -> cf.field_name)::jsonb) as j(key, value)
+where	tar.wrkn_new_rec ? j.key
+	and	j.key not in (
+		select field_name from cached_fields
+	)
+into t_hs;
+raise notice e'\n\n--jsob to hstore--%', t_hs;
+end;
+*/
 	end if;
 
 	----------------------------------------------------------------------------
 	--  Check if exist of username	
 	if 	 common.is_empty(tar.wrkn_new_rec[(tar.func_param->>c_t_username)]) 	then
-	
+
+/*
+raise notice e'\n\n--\ntar.func_state_var:\n%\n\n--\ntar.wrkn_new_rec:\n%'
+	, jsonb_pretty(to_jsonb(tar.func_state_var))
+	, jsonb_pretty(to_jsonb(tar.wrkn_new_rec))
+;
+*/
 		raise exception using message='Impossible to update without USER information'
 			, hint=format('Try adding <%s> field.', tar.func_param->>c_t_username);
 			
@@ -3813,13 +3786,13 @@ begin
 		--> if it's reqired a valid ts versioning must be acive
 		tar.func_state_var.versioning_active=true;
 
-		raise notice 'pd: % < % = %',tar.new_valid_ts, lower((tar).bt_info_old.user_ts_range), (tar.new_valid_ts < lower((tar).bt_info_old.user_ts_range)) ;
+--raise notice 'pd: % < % = %',tar.new_valid_ts, lower((tar).bt_info_old.user_ts_range), (tar.new_valid_ts < lower((tar).bt_info_old.user_ts_range)) ;
 
 		----------------------------------------------------------------------------------
 		--> New valid TS is previous the user_ts_sart of current record
 		if tar.new_valid_ts < lower((tar).bt_info.user_ts_range) then
 
-			raise notice 'Modifica antecedente record corrente';
+--raise notice 'Modifica antecedente record corrente';
 		
 			tar.func_state_var.past_time= true;
 
@@ -4229,7 +4202,7 @@ BEGIN
 	for v_conf in select jsonb_array_elements(p_conf)loop
 	
 	    v_result :=e'\n------------------------------------\n\n'
-			|| __bitemporal_entity__build_ddl(v_conf);
+			|| vrsn.__bitemporal_entity__build_ddl(v_conf);
 			
 	end loop;
 
@@ -4305,7 +4278,7 @@ $$;
 --
 
 COMMENT ON FUNCTION vrsn.admin__bitemporal_entity_register(p_current_table_schema text, p_current_table_name text, p_execute boolean) IS 'Easiast way to register a bitemporal table.
-All the parameters as streatda in standard way.
+All the parameters as treathed in standard way.
 ';
 
 
@@ -4367,32 +4340,32 @@ CREATE FUNCTION vrsn.admin__init(only_get_query boolean) RETURNS text
     LANGUAGE plpgsql
     AS $_$declare
 	v_sql_str	 text=$$
+
 --> empty tables
-	truncate table only vrsn.test_table_history;
-	truncate table only vrsn.test_table_current restart identity ;
-	truncate table only vrsn.test_table_attribute_current restart identity;
-	truncate table only vrsn.test_table_attribute_history;	
-	truncate table only vrsn.test_table_check_run restart identity;
-	truncate table only vrsn.test_table_check_run_detail restart identity;
-	truncate table only vrsn.test_table_check_run_attribute_detail restart identity;
-
-	truncate table only vrsn.trigger_activation_record_base restart identity;
-	truncate table only vrsn.trigger_activation_record_stack restart identity;
-
-	truncate table only trigger_activation_record_base_changelog restart identity;
-	truncate table only trigger_activation_record_stack_trace_p00 restart identity;
-	truncate table only trigger_activation_record_stack_trace_p01 restart identity;
-	truncate table only trigger_activation_record_stack_trace_p02 restart identity;
-	truncate table only trigger_activation_record_stack_trace_p03 restart identity;
-
-	truncate table only def_entity_behavior_current restart identity;
-	truncate table only def_entity_behavior_history restart identity;
-	truncate table only attribute_lineage_current restart identity;
-	truncate table only attribute_lineage_history restart identity;
-	truncate table only attribute_mapping_to_entity_current restart identity;
-	truncate table only attribute_mapping_to_entity_history restart identity;
-	truncate table only parameter_current restart identity;
-	truncate table only parameter_history restart identity;
+	truncate table
+		only vrsn.test_table_history
+	,	only vrsn.test_table_current
+	,	only vrsn.test_table_attribute_current
+	,	only vrsn.test_table_attribute_history
+	,	only vrsn.test_table_check_run
+	,	only vrsn.test_table_check_run_detail
+	,	only vrsn.test_table_check_run_attribute_detail
+	,	only vrsn.trigger_activation_record_base
+	,	only vrsn.trigger_activation_record_stack
+	,	only vrsn.trigger_activation_record_base_changelog
+	,	only vrsn.trigger_activation_record_stack_trace_p00
+	,	only vrsn.trigger_activation_record_stack_trace_p01
+	,	only vrsn.trigger_activation_record_stack_trace_p02
+	,	only vrsn.trigger_activation_record_stack_trace_p03
+	,	only vrsn.def_entity_behavior_current
+	,	only vrsn.def_entity_behavior_history
+	,	only vrsn.attribute_mapping_to_entity_current
+	,	only vrsn.attribute_mapping_to_entity_history
+	,	only vrsn.attribute_lineage_current
+	,	only vrsn.attribute_lineage_history
+	,	only vrsn.parameter_current
+	,	only vrsn.parameter_history
+	 restart identity;
 
 
 INSERT INTO vrsn.def_entity_behavior_current VALUES
@@ -4871,7 +4844,7 @@ CREATE FUNCTION vrsn.audit_record__validate(jb jsonb) RETURNS boolean
 }'::jsonb;
 
 BEGIN
-  	return ext_pkg.validate_json_schema(js, jb);
+  	return common.jsonb_schema__is_valid(jb, js);
 END;$$;
 
 
@@ -6749,24 +6722,6 @@ CREATE AGGREGATE vrsn.table_field_details_to_jts_agg(vrsn.table_field_details) (
 
 
 --
--- Name: bitemporal_parent_table; Type: TABLE; Schema: vrsn; Owner: -
---
-
-CREATE TABLE vrsn.bitemporal_parent_table (
-    user_ts_range vrsn.bt_user_ts_range NOT NULL,
-    db_ts_range vrsn.bt_db_ts_range NOT NULL,
-    audit_record vrsn.bt_audit_record
-);
-
-
---
--- Name: TABLE bitemporal_parent_table; Type: COMMENT; Schema: vrsn; Owner: -
---
-
-COMMENT ON TABLE vrsn.bitemporal_parent_table IS 'Table should be used in future as parent for all the bitemporal table';
-
-
---
 -- Name: attribute_lineage_current; Type: TABLE; Schema: vrsn; Owner: -
 --
 
@@ -6916,6 +6871,24 @@ CREATE TABLE vrsn.bitemporal_parent_attribute_table (
     idx text DEFAULT ''::text NOT NULL,
     attribute_value text
 );
+
+
+--
+-- Name: bitemporal_parent_table; Type: TABLE; Schema: vrsn; Owner: -
+--
+
+CREATE TABLE vrsn.bitemporal_parent_table (
+    user_ts_range vrsn.bt_user_ts_range NOT NULL,
+    db_ts_range vrsn.bt_db_ts_range NOT NULL,
+    audit_record vrsn.bt_audit_record
+);
+
+
+--
+-- Name: TABLE bitemporal_parent_table; Type: COMMENT; Schema: vrsn; Owner: -
+--
+
+COMMENT ON TABLE vrsn.bitemporal_parent_table IS 'Table should be used in future as parent for all the bitemporal table';
 
 
 --
