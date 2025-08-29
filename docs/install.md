@@ -35,8 +35,8 @@ create extension btree_gin with schema extensions cascade;
 create extension tablefunc with schema extensions cascade;
 create extension hstore with schema extensions cascade;
 
-alter role __your-db-user__ set search_path to "$user", extensions, public;
-alter database __your-db__ set search_path to "$user", extensions, public;
+alter role __your-db-user__ set search_path to "$user", public, extensions;
+alter database __your-db__ set search_path to "$user", public, extensions;
 
 ```
 
