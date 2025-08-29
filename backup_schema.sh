@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Configurazione
-DB_NAME="btmp"
-DB_USER="bitemporal"     # <-- sostituisci con il tuo utente
+DB_USER="btmp"
+DB_NAME="bitemporal"     # <-- sostituisci con il tuo utente
 OUTPUT_DIR="."   # cartella di destinazione
 
 # Schemi da esportare
@@ -17,7 +17,7 @@ for schema in "${SCHEMAS[@]}"; do
 
     
     
-    pg_dump postgres://clc@localhost/clc \
+    pg_dump "postgres://$DB_USER@localhost/$DB_NAME" \
     	--format=p \
         --schema="$schema" \
         --schema-only \
