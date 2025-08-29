@@ -107,12 +107,6 @@ psql -v ON_ERROR_STOP=1 -d your_db_name -f srvc.sql
 The -v ON_ERROR_STOP=1 option will stop the installation on the first error, preventing partial schema corruption.
 You can also load with your preferred software copying the contains of files.
 
-### 3.3 Execute the sql for entity_fullname_type  (ONLY THE FIRST TIME)
-```bash
-# Replace "your_db_name" with the name of your database
-psql -v ON_ERROR_STOP=1 -d your_db_name -f entity_fullname_type.sql
-```
-
 
 ## 4. If installation goes ok
 
@@ -120,6 +114,15 @@ psql -v ON_ERROR_STOP=1 -d your_db_name -f entity_fullname_type.sql
 mkdir -p LAST_INSTALL
 cp install_common.sql install_vrsn.sql LAST_INSTALL/
 ```
+
+### 5. Initialize package (ONLY THE FIRST TIME)
+```sql 
+SELECT vrsn.admin__init(
+	<only_get_query boolean>
+);
+
+```
+IF only_get_query it `TRUE` return the instruction must be executed the first time (or any times you want to clean the stored object)
 
 ---
 [main](main.md) - [readme](../README.md)

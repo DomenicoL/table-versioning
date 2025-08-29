@@ -493,6 +493,129 @@ $$;
 
 
 --
+-- Name: __bitemporal_entity__change(text, text, text, vrsn.historice_entity_behaviour, boolean, text, text, boolean, boolean, boolean); Type: FUNCTION; Schema: vrsn; Owner: -
+--
+
+CREATE FUNCTION vrsn.__bitemporal_entity__change(p_entity_schema text, p_entity_name text, p_modify_user_id text, p_historice_entity vrsn.historice_entity_behaviour DEFAULT NULL::vrsn.historice_entity_behaviour, p_enable_history_attributes boolean DEFAULT NULL::boolean, p_main_fields_list text DEFAULT NULL::text, p_cached_fields_list text DEFAULT NULL::text, p_mitigate_conflicts boolean DEFAULT NULL::boolean, p_ignore_unchanged_values boolean DEFAULT NULL::boolean, p_enable_attribute_to_fields_replacement boolean DEFAULT NULL::boolean) RETURNS void
+    LANGUAGE plpgsql
+    AS $_$
+declare
+/*
+	p_entity_schema text,
+	p_entity_name text,
+	p_modify_user_id text,
+	p_historice_entity vrsn.historice_entity_behaviour DEFAULT null,
+	p_enable_history_attributes boolean DEFAULT null,
+	p_main_fields_list text DEFAULT NULL::text,
+	p_cached_fields_list text DEFAULT NULL::text
+	p_mitigate_conflicts boolean default null,
+	p_ignore_unchanged_values boolean default null,
+	p_enable_attribute_to_fields_replacement	boolean default null
+
+	RETURNS void
+*/
+	
+	
+	
+	v_entity_full_name 		vrsn.entity_fullname_dmn;	
+	
+	affected_rows			INTEGER;
+	row_lock				boolean	=false;
+	v_table_full_name		text;
+begin
+
+	
+	--------------------------------------------------------------------
+	--	set entity name
+	v_entity_full_name.schema_name	=	p_entity_schema;
+	v_entity_full_name.table_name	=	p_entity_name;
+
+	
+	--------------------------------------------------------------------
+	--	Try to obtain an advisory locks (semaphore) for
+	--	
+
+	perform vrsn.__lock__get_advsory(
+		'vrsn.trigger_activation_record_base'
+	,	v_entity_full_name::text
+	);
+
+	perform vrsn.__lock__get_advsory(
+		'vrsn.def_entity_behavior'
+	,	v_entity_full_name::text
+	);
+
+	--------------------------------------------------------------------
+	--	Try to obtain row lock
+	--	and check if there is record for entity
+
+	begin 
+		v_table_full_name='vrsn.def_entity_behavior';
+		
+		select true into strict row_lock
+		from vrsn.def_entity_behavior
+		WHERE entity_full_name = v_entity_full_name
+		for update NOWAIT;
+
+		v_table_full_name='vrsn.trigger_activation_record_base';
+		
+		select true into row_lock
+		from only vrsn.trigger_activation_record_base
+		WHERE entity_full_name = v_entity_full_name
+		for update NOWAIT;
+
+	EXCEPTION
+		WHEN lock_not_available THEN
+		raise lock_not_available 
+			using message=format('Exlusive row lock unavailable for entity in %1$s in %2$s'
+					,	v_entity_full_name
+					,	v_table_full_name);	
+		WHEN no_data_found THEN
+			raise no_data_found	
+				using message=format('No record for %1$s in %2$s'
+					,	v_entity_full_name
+					,	v_table_full_name);	
+	end;
+	--------------------------------------------------------------------
+	--	update def entity behaviour record
+
+    UPDATE vrsn.def_entity_behavior
+    SET 
+        historice_entity 
+			= COALESCE(p_historice_entity, historice_entity),
+        enable_history_attributes 
+			= COALESCE(p_enable_history_attributes, enable_history_attributes),
+        main_fields_list 
+			= COALESCE(p_main_fields_list, main_fields_list),
+        cached_fields_list 
+			= COALESCE(p_cached_fields_list, cached_fields_list),
+        mitigate_conflicts 
+			= COALESCE(p_mitigate_conflicts, mitigate_conflicts),
+        ignore_unchanged_values
+			= COALESCE(p_ignore_unchanged_values, ignore_unchanged_values),
+        enable_attribute_to_fields_replacement 
+			= COALESCE(p_enable_attribute_to_fields_replacement, enable_attribute_to_fields_replacement),
+		modify_user_id 
+			= p_modify_user_id
+    WHERE entity_full_name = v_entity_full_name;
+    
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+
+	delete
+	from only vrsn.trigger_activation_record_base
+	WHERE entity_full_name = v_entity_full_name;
+
+	
+    if affected_rows =0 then
+		raise exception 'Entity <%> doesn''t exist,', v_entity_full_name::text;
+	end if;
+
+
+end;
+$_$;
+
+
+--
 -- Name: __bitemporal_entity__complete_conf_param(jsonb); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -818,10 +941,10 @@ INSERT INTO vrsn.def_entity_behavior(
 	,	history_table_full_name.table_name
 	,	attribute_entity_full_name.schema_name
 	,	attribute_entity_full_name.table_name
-
 	,	historice_entity, enable_history_attributes
 	,	main_fields_list, cached_fields_list
-	,	enable_attribute_to_fields_replacement, %16$I
+	,	enable_attribute_to_fields_replacement
+	,	tar_version, %17$I
 	,	action_hints)
 VALUES(	%1$s, %2$s
 	,	%3$s, %4$s
@@ -830,7 +953,8 @@ VALUES(	%1$s, %2$s
 	,	%9$s, %10$s
 	,	%11$s, %12$s
 	,	%13$s, %14$s
-	,	%15$s, 'process:vrsn.register'
+	,	%15$s
+	,	%16$s, 'process:vrsn.register'
 	,	'{"onDupKey":"update"}'::jsonb);$$
 		,	quote_nullable((p_conf->'entity'->>'schema_name'))
 		,	quote_nullable((p_conf->'entity'->>'table_name'))
@@ -847,6 +971,7 @@ VALUES(	%1$s, %2$s
 		,	quote_nullable(p_conf->>'main_fields_list')
 		,	quote_nullable(p_conf->>'cached_fields_list')
 		,	p_conf->>'enable_attribute_to_fields_replacement'
+		,	quote_nullable('1') --tar_version
 		,	t_username
 		);
 	
@@ -4168,6 +4293,32 @@ END;
 
 
 --
+-- Name: admin__bitemporal_entity_change_behavior(text, text, text, vrsn.historice_entity_behaviour, boolean, text, text, boolean, boolean, boolean); Type: FUNCTION; Schema: vrsn; Owner: -
+--
+
+CREATE FUNCTION vrsn.admin__bitemporal_entity_change_behavior(p_entity_schema text, p_entity_name text, p_modify_user_id text, p_historice_entity vrsn.historice_entity_behaviour DEFAULT NULL::vrsn.historice_entity_behaviour, p_enable_history_attributes boolean DEFAULT NULL::boolean, p_main_fields_list text DEFAULT NULL::text, p_cached_fields_list text DEFAULT NULL::text, p_mitigate_conflicts boolean DEFAULT NULL::boolean, p_ignore_unchanged_values boolean DEFAULT NULL::boolean, p_enable_attribute_to_fields_replacement boolean DEFAULT NULL::boolean) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    -- Chiamiamo la funzione sottostante di vrsn, passando i parametri nominativamente.
+    -- I nomi a destra del ":=" sono i nomi dei parametri della funzione wrapper.
+    PERFORM vrsn.__bitemporal_entity__change(
+        p_entity_schema := p_entity_schema,
+        p_entity_name := p_entity_name,
+        p_modify_user_id := p_modify_user_id,
+        p_historice_entity := p_historice_entity,
+        p_enable_history_attributes := p_enable_history_attributes,
+        p_main_fields_list := p_main_fields_list,
+        p_cached_fields_list := p_cached_fields_list,
+        p_mitigate_conflicts := p_mitigate_conflicts,
+        p_ignore_unchanged_values := p_ignore_unchanged_values,
+        p_enable_attribute_to_fields_replacement := p_enable_attribute_to_fields_replacement
+    );
+END;
+$$;
+
+
+--
 -- Name: admin__bitemporal_entity_register(jsonb, boolean); Type: FUNCTION; Schema: vrsn; Owner: -
 --
 
@@ -4200,6 +4351,9 @@ BEGIN
 	----------------------------------------------------------------------------------------
 	--	Itero sugli elementi
 	for v_conf in select jsonb_array_elements(p_conf)loop
+
+		-- Forzo operatore di creazione
+		v_conf['operation_type']='create';
 	
 	    v_result :=e'\n------------------------------------\n\n'
 			|| vrsn.__bitemporal_entity__build_ddl(v_conf);
@@ -4238,7 +4392,7 @@ With this method you can define many parameters for each entity';
 
 CREATE FUNCTION vrsn.admin__bitemporal_entity_register(p_current_table_schema text, p_current_table_name text, p_execute boolean DEFAULT false) RETURNS text
     LANGUAGE plpgsql
-    AS $$
+    AS $_$
 DECLARE
 /*
 	IN p_current_table_schema text,
@@ -4247,11 +4401,15 @@ DECLARE
 	RETURNS text
 */
     v_result		text;
-	v_jb			jsonb='{   "current_table": {
-								    "table_name": "",
-								    "schema_name": ""
-							  }
-							}'::jsonb;
+	v_jb			jsonb=$$
+{
+	"operation_type":"create"
+,	"current_table": {
+		"table_name": "",
+		"schema_name": ""
+	}
+}
+$$::jsonb;
 BEGIN
 
 	v_jb['current_table']['schema_name']	=	to_jsonb(p_current_table_schema);
@@ -4270,7 +4428,7 @@ BEGIN
 	
     RETURN e'-----Executed------\n\n\n' || v_result;
 END;
-$$;
+$_$;
 
 
 --
@@ -4280,32 +4438,6 @@ $$;
 COMMENT ON FUNCTION vrsn.admin__bitemporal_entity_register(p_current_table_schema text, p_current_table_name text, p_execute boolean) IS 'Easiast way to register a bitemporal table.
 All the parameters as treathed in standard way.
 ';
-
-
---
--- Name: admin__entity_change_behavior(text, text, text, vrsn.historice_entity_behaviour, boolean, text, text, boolean, boolean, boolean); Type: FUNCTION; Schema: vrsn; Owner: -
---
-
-CREATE FUNCTION vrsn.admin__entity_change_behavior(p_entity_schema text, p_entity_name text, p_modify_user_id text, p_historice_entity vrsn.historice_entity_behaviour DEFAULT NULL::vrsn.historice_entity_behaviour, p_enable_history_attributes boolean DEFAULT NULL::boolean, p_main_fields_list text DEFAULT NULL::text, p_cached_fields_list text DEFAULT NULL::text, p_mitigate_conflicts boolean DEFAULT NULL::boolean, p_ignore_unchanged_values boolean DEFAULT NULL::boolean, p_enable_attribute_to_fields_replacement boolean DEFAULT NULL::boolean) RETURNS void
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-    -- Chiamiamo la funzione sottostante di vrsn, passando i parametri nominativamente.
-    -- I nomi a destra del ":=" sono i nomi dei parametri della funzione wrapper.
-    PERFORM vrsn.bitemporal_entity__change(
-        p_entity_schema := p_entity_schema,
-        p_entity_name := p_entity_name,
-        p_modify_user_id := p_modify_user_id,
-        p_historice_entity := p_historice_entity,
-        p_enable_history_attributes := p_enable_history_attributes,
-        p_main_fields_list := p_main_fields_list,
-        p_cached_fields_list := p_cached_fields_list,
-        p_mitigate_conflicts := p_mitigate_conflicts,
-        p_ignore_unchanged_values := p_ignore_unchanged_values,
-        p_enable_attribute_to_fields_replacement := p_enable_attribute_to_fields_replacement
-    );
-END;
-$$;
 
 
 --
@@ -4340,6 +4472,140 @@ CREATE FUNCTION vrsn.admin__init(only_get_query boolean) RETURNS text
     LANGUAGE plpgsql
     AS $_$declare
 	v_sql_str	 text=$$
+-- ========================================
+-- CAST DA/PER UNKNOWN (necessario per literal stringa)
+-- NON POSSIBILE
+-- ========================================
+
+-- ========================================
+-- DROP CAST IF EXIST
+-- ========================================
+DROP CAST IF EXISTS (text AS vrsn.entity_fullname_type);
+DROP CAST IF EXISTS (vrsn.entity_fullname_type as text);
+DROP CAST IF EXISTS  (hstore AS vrsn.entity_fullname_type);
+DROP CAST IF EXISTS  (vrsn.entity_fullname_type AS hstore);
+DROP CAST IF EXISTS  (json AS vrsn.entity_fullname_type);
+DROP CAST IF EXISTS  (vrsn.entity_fullname_type AS json);
+DROP CAST IF EXISTS  (vrsn.entity_fullname_type AS json);
+DROP CAST IF EXISTS  (jsonb AS vrsn.entity_fullname_type);
+DROP CAST IF EXISTS  (vrsn.entity_fullname_type AS jsonb);
+
+-- ========================================
+-- CAST DA/PER text IMPLICIT
+-- ========================================
+
+CREATE CAST (text AS vrsn.entity_fullname_type)
+WITH FUNCTION vrsn.__entity_fullname_type__from_string(text)
+AS IMPLICIT;
+
+CREATE CAST (vrsn.entity_fullname_type as text)
+WITH FUNCTION vrsn.__entity_fullname_type__to_string(vrsn.entity_fullname_type)
+AS IMPLICIT;
+-- ========================================
+-- CAST DA/PER HSTORE
+-- ========================================
+
+-- Cast da hstore
+CREATE CAST (hstore AS vrsn.entity_fullname_type)
+WITH FUNCTION vrsn.__entity_fullname_type__from_hstore(hstore)
+AS ASSIGNMENT;
+
+-- Cast verso hstore
+CREATE CAST (vrsn.entity_fullname_type AS hstore)
+WITH FUNCTION vrsn.__entity_fullname_type__to_hstore(vrsn.entity_fullname_type)
+AS ASSIGNMENT;
+
+-- ========================================
+-- CAST DA/PER JSON/b
+-- ========================================
+-- Cast da json
+CREATE CAST (json AS vrsn.entity_fullname_type)
+WITH FUNCTION vrsn.__entity_fullname_type__from_json(json)
+AS ASSIGNMENT;
+
+-- Cast verso json
+CREATE CAST (vrsn.entity_fullname_type AS json)
+WITH FUNCTION vrsn.__entity_fullname_type__to_json(vrsn.entity_fullname_type)
+AS ASSIGNMENT;
+
+
+-- Cast da jsonb
+CREATE CAST (jsonb AS vrsn.entity_fullname_type)
+WITH FUNCTION vrsn.__entity_fullname_type__from_jsonb(jsonb)
+AS ASSIGNMENT;
+
+-- Cast verso jsonb
+CREATE CAST (vrsn.entity_fullname_type AS jsonb)
+WITH FUNCTION vrsn.__entity_fullname_type__to_jsonb(vrsn.entity_fullname_type)
+AS ASSIGNMENT;
+
+
+-- ========================================
+-- Operatori di confronto
+-- ========================================
+
+-- Operatori di confronto
+CREATE OPERATOR = (
+    LEFTARG = vrsn.entity_fullname_type,
+    RIGHTARG = vrsn.entity_fullname_type,
+    FUNCTION = vrsn.__entity_fullname_type__eq,
+    COMMUTATOR = =,
+    NEGATOR = <>,
+    RESTRICT = eqsel,
+    JOIN = eqjoinsel,
+    HASHES,
+    MERGES
+);
+
+CREATE OPERATOR <> (
+    LEFTARG = vrsn.entity_fullname_type,
+    RIGHTARG = vrsn.entity_fullname_type,
+    FUNCTION = vrsn.__entity_fullname_type__ne,
+    COMMUTATOR = <>,
+    NEGATOR = =,
+    RESTRICT = neqsel,
+    JOIN = neqjoinsel
+);
+
+CREATE OPERATOR < (
+    LEFTARG = vrsn.entity_fullname_type,
+    RIGHTARG = vrsn.entity_fullname_type,
+    FUNCTION = vrsn.__entity_fullname_type__lt,
+    COMMUTATOR = >,
+    NEGATOR = >=,
+    RESTRICT = scalarltsel,
+    JOIN = scalarltjoinsel
+);
+
+CREATE OPERATOR <= (
+    LEFTARG = vrsn.entity_fullname_type,
+    RIGHTARG = vrsn.entity_fullname_type,
+    FUNCTION = vrsn.__entity_fullname_type__le,
+    COMMUTATOR = >=,
+    NEGATOR = >,
+    RESTRICT = scalarlesel,
+    JOIN = scalarlejoinsel
+);
+
+CREATE OPERATOR > (
+    LEFTARG = vrsn.entity_fullname_type,
+    RIGHTARG = vrsn.entity_fullname_type,
+    FUNCTION = vrsn.__entity_fullname_type__gt,
+    COMMUTATOR = <,
+    NEGATOR = <=,
+    RESTRICT = scalargtsel,
+    JOIN = scalargtjoinsel
+);
+
+CREATE OPERATOR >= (
+    LEFTARG = vrsn.entity_fullname_type,
+    RIGHTARG = vrsn.entity_fullname_type,
+    FUNCTION = vrsn.__entity_fullname_type__ge,
+    COMMUTATOR = <=,
+    NEGATOR = <,
+    RESTRICT = scalargesel,
+    JOIN = scalargejoinsel
+);
 
 --> empty tables
 	truncate table
@@ -4372,7 +4638,10 @@ INSERT INTO vrsn.def_entity_behavior_current VALUES
 	('("[""2025-08-27 01:47:04.813292+02"",infinity)","[""2025-08-27 01:47:04.813292+02"",infinity)","{""process"": ""vrsn.register""}")', '(vrsn,def_entity_behavior)', '(vrsn,def_entity_behavior)', '(vrsn,def_entity_behavior_current)', '(vrsn,def_entity_behavior_history)', '(,)', 'always', false, NULL, NULL, true, true, false, NULL),
 	('("[""2025-08-27 10:27:05.83773+02"",infinity)","[""2025-08-27 10:27:05.83773+02"",infinity)","{""process"": ""vrsn.register""}")', '(vrsn,parameter)', '(vrsn,parameter)', '(vrsn,parameter_current)', '(vrsn,parameter_history)', '(,)', 'always', false, NULL, NULL, true, true, false, NULL),
 	('("[""2025-08-27 10:28:01.115262+02"",infinity)","[""2025-08-27 10:28:01.115262+02"",infinity)","{""process"": ""vrsn.register""}")', '(vrsn,attribute_mapping_to_entity)', '(vrsn,attribute_mapping_to_entity)', '(vrsn,attribute_mapping_to_entity_current)', '(vrsn,attribute_mapping_to_entity_history)', '(,)', 'always', false, NULL, NULL, true, true, false, NULL),
-	('("[""2025-08-27 10:28:30.986994+02"",infinity)","[""2025-08-27 10:28:30.986994+02"",infinity)","{""process"": ""vrsn.register""}")', '(vrsn,attribute_lineage)', '(vrsn,attribute_lineage)', '(vrsn,attribute_lineage_current)', '(vrsn,attribute_lineage_history)', '(,)', 'always', false, NULL, NULL, true, true, false, NULL);
+	('("[""2025-08-27 10:28:30.986994+02"",infinity)","[""2025-08-27 10:28:30.986994+02"",infinity)","{""process"": ""vrsn.register""}")', '(vrsn,attribute_lineage)', '(vrsn,attribute_lineage)', '(vrsn,attribute_lineage_current)', '(vrsn,attribute_lineage_history)', '(,)', 'always', false, NULL, NULL, true, true, false, NULL),
+	('("[""2025-08-29 12:05:52.564657+02"",infinity)","[""2025-08-29 12:05:52.564657+02"",infinity)","{""process"": ""vrsn.register""}")', '(vrsn,test_table_attribute)', '(vrsn,test_table_attribute)', '(vrsn,test_table_attribute_current)', '(vrsn,test_table_attribute_history)', '(,)', 'always', false, NULL, NULL, true, true, false, NULL),
+	('("[""2025-08-29 18:25:04.426644+02"",infinity)","[""2025-08-29 18:25:04.426644+02"",infinity)","{""process"": ""test""}")', '(vrsn,test_table)', '(vrsn,test_table)', '(vrsn,test_table_current)', '(vrsn,test_table_history)', '(vrsn,test_table_attribute)', 'on_main_fields', true, 'main_ts', 'many_fields', true, true, true, NULL);
+	
 
 
 
@@ -4846,129 +5115,6 @@ CREATE FUNCTION vrsn.audit_record__validate(jb jsonb) RETURNS boolean
 BEGIN
   	return common.jsonb_schema__is_valid(jb, js);
 END;$$;
-
-
---
--- Name: bitemporal_entity__change(text, text, text, vrsn.historice_entity_behaviour, boolean, text, text, boolean, boolean, boolean); Type: FUNCTION; Schema: vrsn; Owner: -
---
-
-CREATE FUNCTION vrsn.bitemporal_entity__change(p_entity_schema text, p_entity_name text, p_modify_user_id text, p_historice_entity vrsn.historice_entity_behaviour DEFAULT NULL::vrsn.historice_entity_behaviour, p_enable_history_attributes boolean DEFAULT NULL::boolean, p_main_fields_list text DEFAULT NULL::text, p_cached_fields_list text DEFAULT NULL::text, p_mitigate_conflicts boolean DEFAULT NULL::boolean, p_ignore_unchanged_values boolean DEFAULT NULL::boolean, p_enable_attribute_to_fields_replacement boolean DEFAULT NULL::boolean) RETURNS void
-    LANGUAGE plpgsql
-    AS $_$
-declare
-/*
-	p_entity_schema text,
-	p_entity_name text,
-	p_modify_user_id text,
-	p_historice_entity vrsn.historice_entity_behaviour DEFAULT null,
-	p_enable_history_attributes boolean DEFAULT null,
-	p_main_fields_list text DEFAULT NULL::text,
-	p_cached_fields_list text DEFAULT NULL::text
-	p_mitigate_conflicts boolean default null,
-	p_ignore_unchanged_values boolean default null,
-	p_enable_attribute_to_fields_replacement	boolean default null
-
-	RETURNS void
-*/
-	
-	
-	
-	v_entity_full_name 		vrsn.entity_fullname_dmn;	
-	
-	affected_rows			INTEGER;
-	row_lock				boolean	=false;
-	v_table_full_name		text;
-begin
-
-	
-	--------------------------------------------------------------------
-	--	set entity name
-	v_entity_full_name.schema_name	=	p_entity_schema;
-	v_entity_full_name.table_name	=	p_entity_name;
-
-	
-	--------------------------------------------------------------------
-	--	Try to obtain an advisory locks (semaphore) for
-	--	
-
-	perform vrsn.__lock__get_advsory(
-		'vrsn.trigger_activation_record_base'
-	,	v_entity_full_name::text
-	);
-
-	perform vrsn.__lock__get_advsory(
-		'vrsn.def_entity_behavior'
-	,	v_entity_full_name::text
-	);
-
-	--------------------------------------------------------------------
-	--	Try to obtain row lock
-	--	and check if there is record for entity
-
-	begin 
-		v_table_full_name='vrsn.def_entity_behavior';
-		
-		select true into strict row_lock
-		from vrsn.def_entity_behavior
-		WHERE entity_full_name = v_entity_full_name
-		for update NOWAIT;
-
-		v_table_full_name='vrsn.trigger_activation_record_base';
-		
-		select true into row_lock
-		from only vrsn.trigger_activation_record_base
-		WHERE entity_full_name = v_entity_full_name
-		for update NOWAIT;
-
-	EXCEPTION
-		WHEN lock_not_available THEN
-		raise lock_not_available 
-			using message=format('Exlusive row lock unavailable for entity in %1$s in %2$s'
-					,	v_entity_full_name
-					,	v_table_full_name);	
-		WHEN no_data_found THEN
-			raise no_data_found	
-				using message=format('No record for %1$s in %2$s'
-					,	v_entity_full_name
-					,	v_table_full_name);	
-	end;
-	--------------------------------------------------------------------
-	--	update def entity behaviour record
-
-    UPDATE vrsn.def_entity_behavior
-    SET 
-        historice_entity 
-			= COALESCE(p_historice_entity, historice_entity),
-        enable_history_attributes 
-			= COALESCE(p_enable_history_attributes, enable_history_attributes),
-        main_fields_list 
-			= COALESCE(p_main_fields_list, main_fields_list),
-        cached_fields_list 
-			= COALESCE(p_cached_fields_list, cached_fields_list),
-        mitigate_conflicts 
-			= COALESCE(p_mitigate_conflicts, mitigate_conflicts),
-        ignore_unchanged_values
-			= COALESCE(p_ignore_unchanged_values, ignore_unchanged_values),
-        enable_attribute_to_fields_replacement 
-			= COALESCE(p_enable_attribute_to_fields_replacement, enable_attribute_to_fields_replacement),
-		modify_user_id 
-			= p_modify_user_id
-    WHERE entity_full_name = v_entity_full_name;
-    
-    GET DIAGNOSTICS affected_rows = ROW_COUNT;
-
-	delete
-	from only vrsn.trigger_activation_record_base
-	WHERE entity_full_name = v_entity_full_name;
-
-	
-    if affected_rows =0 then
-		raise exception 'Entity <%> doesn''t exist,', v_entity_full_name::text;
-	end if;
-
-
-end;
-$_$;
 
 
 --
@@ -6465,7 +6611,7 @@ $_$;
 
 CREATE FUNCTION vrsn.test__tar_init() RETURNS boolean
     LANGUAGE plpgsql
-    AS $$declare
+    AS $_$declare
 
 begin
 
@@ -6492,14 +6638,21 @@ begin
 	---------------------------------------------------------------------------------------
 	-- Register current table and create all other structure
 
-	select  vrsn.bitemporal_entity__register(
-		'vrsn',
-		'test_table_current',
-		'on_main_fields',
-		true,
-		'main_ts',
-		'many_fields',
-		false
+	select  vrsn.bitemporal_entity__register($$
+{
+  "current_table": {
+    "table_name": "test_table_current",
+    "schema_name": "vrsn"
+  },
+  "historice_entity": "always",
+  "main_fields_list": "main_ts",
+  "cached_fields_list": "many_fields",
+  "mitigate_conflicts": true,
+  "ignore_unchanged_values": true,
+  "enable_history_attributes": true,
+  "enable_attribute_to_fields_replacement": true
+}
+	$$::jsonb
 	);
 
 
@@ -6572,8 +6725,49 @@ begin
 	ALTER TABLE IF EXISTS vrsn.test_table_check_run_detail
 		ADD CONSTRAINT test_table_check_run_detail_pk PRIMARY KEY (step_run, rwn );
 
+
+	-- Table: vrsn.test_table_check_run_attribute_detail
+	
+	DROP TABLE IF EXISTS vrsn.test_table_check_run_attribute_detail;
+	
+	CREATE TABLE IF NOT EXISTS vrsn.test_table_check_run_attribute_detail
+	(
+	    step_run integer NOT NULL,
+	    rwn bigint NOT NULL,
+	    table_current boolean,
+	    id integer NOT NULL,
+	    attribute_id integer NOT NULL,
+	    idx text COLLATE pg_catalog."default" NOT NULL DEFAULT '0'::text,
+	    attribute_value text COLLATE pg_catalog."default",
+	    error_found jsonb,
+	    deactivation_ts timestamp with time zone,
+	    check_closing_period boolean,
+	    check_actual_ts boolean,
+	    check_db_period boolean,
+	    rwn_seq bigint,
+	    check_user_period boolean,
+	    check_actual_ts_compliance boolean,
+	    check_json_schema boolean,
+	    actual_insert_ts timestamp with time zone,
+	    actual_close_ts timestamp with time zone,
+	    db_close_finite boolean,
+	    user_close_finite boolean,
+	    is_active boolean,
+	    user_ts_start timestamp with time zone,
+	    user_ts_end timestamp with time zone,
+	    db_ts_start timestamp with time zone,
+	    db_ts_end timestamp with time zone,
+	    audit_record jsonb,
+	    bt_info_prev vrsn.bitemporal_record,
+	    bt_info_prev_group vrsn.bitemporal_record,
+	    CONSTRAINT test_table_check_run_attribute_detail_pk PRIMARY KEY (step_run, rwn)
+	)
+	
+	TABLESPACE pg_default;
+
+
 	return true;
-end;$$;
+end;$_$;
 
 
 --
@@ -6910,6 +7104,7 @@ CREATE TABLE vrsn.def_entity_behavior_current (
     ignore_unchanged_values boolean DEFAULT true NOT NULL,
     enable_attribute_to_fields_replacement boolean DEFAULT false NOT NULL,
     field_special_behavior jsonb,
+    tar_version text DEFAULT 1,
     CONSTRAINT def_entity_behavior_current_check CHECK (((NOT enable_history_attributes) OR (attribute_entity_full_name IS NOT NULL)))
 );
 
@@ -6956,6 +7151,7 @@ CREATE VIEW vrsn.def_entity_behavior AS
     s.ignore_unchanged_values,
     s.enable_attribute_to_fields_replacement,
     s.field_special_behavior,
+    s.tar_version,
     false AS is_closed,
     NULL::text AS modify_user_id,
     NULL::timestamp with time zone AS modify_ts,
@@ -7283,6 +7479,13 @@ ALTER TABLE ONLY vrsn.def_entity_behavior_history ALTER COLUMN ignore_unchanged_
 --
 
 ALTER TABLE ONLY vrsn.def_entity_behavior_history ALTER COLUMN enable_attribute_to_fields_replacement SET DEFAULT false;
+
+
+--
+-- Name: def_entity_behavior_history tar_version; Type: DEFAULT; Schema: vrsn; Owner: -
+--
+
+ALTER TABLE ONLY vrsn.def_entity_behavior_history ALTER COLUMN tar_version SET DEFAULT 1;
 
 
 --
