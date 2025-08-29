@@ -156,5 +156,176 @@ Unlike the manual approach, `vrsn.admin__bitemporal_entity_register` offers sign
 | **Setup Complexity** | High (DDL, triggers, conventions)                      | Low (single `jsonb` function call)                             | **Automated** for ease of use and reduced error surface.                            |
 | **Best For** | Very specific, non-standard needs; deep understanding of internals. | **Most use cases**, especially for evolving data models and attribute management.    | **`vrsn.admin__bitemporal_entity_register` is the recommended path for new entities.** |
 
+## Example of full script returned/executed by register function
+
+```sql
+
+-- indice gist composto (user_ts_range, db_ts_range)
+
+create index if not exists test_table_current_user_db_tsr_ix on vrsn.test_table_current using gist (((bt_info).user_ts_range), ((bt_info).db_ts_range));
+
+-- indice gist solo su db_ts_range
+
+create index if not exists test_table_current_db_tsr_ix on vrsn.test_table_current using gist (((bt_info).db_ts_range));
+
+-- Create history table
+
+CREATE TABLE if not exists vrsn.test_table_history (
+	CONSTRAINT test_table_history_pk primary key (id, bt_info)
+) INHERITS (vrsn.test_table_current);
+
+
+-- indice gist composto (user_ts_range, db_ts_range)
+
+create index if not exists test_table_history_user_db_tsr_ix on vrsn.test_table_history using gist (((bt_info).user_ts_range), ((bt_info).db_ts_range));
+
+-- indice gist solo su db_ts_range
+
+create index if not exists test_table_history_db_tsr_ix on vrsn.test_table_history using gist (((bt_info).db_ts_range));
+
+
+
+
+
+-- Create view	
+
+--drop view vrsn.test_table;
+
+create or replace view vrsn.test_table as
+select s.id
+	,	s.sometext
+	,	s.main_ts
+	,	s.somevalue
+	,	s.many_fields
+	,	false::boolean AS is_closed
+	,	NULL::text AS modify_user_id
+	,	NULL::timestamp with time zone AS modify_ts
+	,	NULL::jsonb AS action_hints
+from only vrsn.test_table_current as s;
+				
+create or replace trigger trg_test_table
+    instead of insert or delete or update 
+    on vrsn.test_table
+    for each row
+    execute function vrsn.trigger_handler();
+
+-- Register data into vrsn.def_entity_behavior
+		
+INSERT INTO vrsn.def_entity_behavior(
+		entity_full_name.schema_name
+	,	entity_full_name.table_name
+	,	current_view_full_name.schema_name
+	,	current_view_full_name.table_name
+	,	current_table_full_name.schema_name
+	,	current_table_full_name.table_name
+	,	history_table_full_name.schema_name
+	,	history_table_full_name.table_name
+	,	attribute_entity_full_name.schema_name
+	,	attribute_entity_full_name.table_name
+
+	,	historice_entity, enable_history_attributes
+	,	main_fields_list, cached_fields_list
+	,	enable_attribute_to_fields_replacement, modify_user_id
+	,	action_hints)
+VALUES(	'vrsn', 'test_table'
+	,	'vrsn', 'test_table'
+	,	'vrsn', 'test_table_current'
+	,	'vrsn', 'test_table_history'
+	,	'vrsn', 'test_table_attribute'
+	,	'always', true
+	,	NULL, NULL
+	,	false, 'process:vrsn.register'
+	,	'{"onDupKey":"update"}'::jsonb);
+
+
+-- Create Attribute Table
+create table if not exists vrsn.test_table_attribute_current (
+	bt_info        vrsn.bitemporal_record NOT NULL
+ ,	id integer not null
+		,	attribute_id bigint not null
+		,	idx text default ''::text not null
+		,	attribute_value text
+ ,   constraint test_table_attribute_current_pk primary key (id, attribute_id, idx)
+);
+	
+
+
+-- indice gist composto (user_ts_range, db_ts_range)
+
+create index if not exists test_table_attribute_current_user_db_tsr_ix on vrsn.test_table_attribute_current using gist (((bt_info).user_ts_range), ((bt_info).db_ts_range));
+
+-- indice gist solo su db_ts_range
+
+create index if not exists test_table_attribute_current_db_tsr_ix on vrsn.test_table_attribute_current using gist (((bt_info).db_ts_range));
+
+
+
+
+-- Create history table
+
+CREATE TABLE if not exists vrsn.test_table_attribute_history (
+	CONSTRAINT test_table_attribute_history_pk primary key (id, attribute_id, idx, bt_info)
+) INHERITS (vrsn.test_table_attribute_current);
+
+
+-- indice gist composto (user_ts_range, db_ts_range)
+
+create index if not exists test_table_attribute_history_user_db_tsr_ix on vrsn.test_table_attribute_history using gist (((bt_info).user_ts_range), ((bt_info).db_ts_range));
+
+-- indice gist solo su db_ts_range
+
+create index if not exists test_table_attribute_history_db_tsr_ix on vrsn.test_table_attribute_history using gist (((bt_info).db_ts_range));
+
+
+-- Create view	
+
+--drop view vrsn.test_table_attribute;
+
+create or replace view vrsn.test_table_attribute as
+select s.id
+	,	s.attribute_id
+	,	s.idx
+	,	s.attribute_value
+	,	false::boolean AS is_closed
+	,	NULL::text AS modify_user_id
+	,	NULL::timestamp with time zone AS modify_ts
+	,	NULL::jsonb AS action_hints
+from only vrsn.test_table_attribute_current as s;
+				
+create or replace trigger trg_test_table_attribute
+    instead of insert or delete or update 
+    on vrsn.test_table_attribute
+    for each row
+    execute function vrsn.trigger_handler();
+
+-- Register data into vrsn.def_entity_behavior
+		
+INSERT INTO vrsn.def_entity_behavior(
+		entity_full_name.schema_name
+	,	entity_full_name.table_name
+	,	current_view_full_name.schema_name
+	,	current_view_full_name.table_name
+	,	current_table_full_name.schema_name
+	,	current_table_full_name.table_name
+	,	history_table_full_name.schema_name
+	,	history_table_full_name.table_name
+	,	attribute_entity_full_name.schema_name
+	,	attribute_entity_full_name.table_name
+
+	,	historice_entity, enable_history_attributes
+	,	main_fields_list, cached_fields_list
+	,	enable_attribute_to_fields_replacement, modify_user_id
+	,	action_hints)
+VALUES(	'vrsn', 'test_table_attribute'
+	,	'vrsn', 'test_table_attribute'
+	,	'vrsn', 'test_table_attribute_current'
+	,	'vrsn', 'test_table_attribute_history'
+	,	NULL, NULL
+	,	'always', false
+	,	NULL, NULL
+	,	false, 'process:vrsn.register'
+	,	'{"onDupKey":"update"}'::jsonb);
+```
+
 ---
 [main](main.md) - [readme](../README.md)

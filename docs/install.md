@@ -21,12 +21,12 @@ Please ensure you have the following installed:
 The first step is to run the `prepare.sh` script, which handles the creation of personalized installation scripts and the changelog.
 
 
-### 1.1.  Create schema and extensions
+### 1.1.  Create schema and extensions (ONLY THE FIRST TIME)
 
 ```sql
 create schema if not exists common    authorization __your-db-user__;
 create schema if not exists extensions     authorization __your-db-user__;
-create schema if not exists srvc     authorization __your-db-user__;
+create schema if not exists srvc     authorization __your-db-user__ -- just for non production environment;
 create schema if not exists vrsn     authorization __your-db-user__;
 
 create extension ltree with schema extensions cascade;
@@ -101,11 +101,17 @@ Use the `psql` commands to apply the changes to your database.
 # Replace "your_db_name" with the name of your database
 psql -v ON_ERROR_STOP=1 -d your_db_name -f install_common.sql
 psql -v ON_ERROR_STOP=1 -d your_db_name -f install_vrsn.sql
-
-The -v ON_ERROR_STOP=1 option will stop the installation on the first error, preventing partial schema corruption.
+psql -v ON_ERROR_STOP=1 -d your_db_name -f srvc.sql
 ```
 
+The -v ON_ERROR_STOP=1 option will stop the installation on the first error, preventing partial schema corruption.
 You can also load with your preferred software copying the contains of files.
+
+### 3.3 Execute the sql for entity_fullname_type  (ONLY THE FIRST TIME)
+```bash
+# Replace "your_db_name" with the name of your database
+psql -v ON_ERROR_STOP=1 -d your_db_name -f entity_fullname_type.sql
+```
 
 
 ## 4. If installation goes ok
